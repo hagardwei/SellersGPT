@@ -3,6 +3,12 @@ import type { CollectionConfig } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { getValidateSlug } from '../utilities/validateSlug'
+import { getBlockDuplicateSlug } from '../utilities/blockDuplicateSlug'
+import { autoGenerateGroupId } from '../utilities/autoGenerateGroupId'
+import { cloneTranslationHandler } from '../utilities/cloneTranslation'
+import { syncGroupSlug } from '../utilities/syncGroupSlug'
+import { validateUniqueGroupLanguage } from '../utilities/validateUniqueGroupLanguage'
+import { deleteGroupHandler } from '../utilities/deleteGroup'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
@@ -14,8 +20,23 @@ export const Categories: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    baseListFilter: () => ({
+      language: {
+        equals: 'en',
+      },
+    }),
   },
   fields: [
+    {
+      name: 'translation_hub',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/components/TranslationHub#TranslationHub',
+        },
+      },
+    },
     {
       name: 'title',
       type: 'text',
@@ -26,19 +47,22 @@ export const Categories: CollectionConfig = {
       type: 'select',
       options: [
         { label: 'English', value: 'en' },
-        { label: 'Spanish', value: 'es' },
-        { label: 'German', value: 'de' },
-        { label: 'French', value: 'fr' },
-        { label: 'Portuguese', value: 'pt' },
-        { label: 'Italian', value: 'it' },
-        { label: 'Turkish', value: 'tr' },
-        { label: 'Russian', value: 'ru' },
-        { label: 'Dutch', value: 'nl' },
+        { label: 'Español', value: 'es' },
+        { label: 'Deutsch', value: 'de' },
+        { label: 'Français', value: 'fr' },
+        { label: 'Português', value: 'pt' },
+        { label: 'Italiano', value: 'it' },
+        { label: 'Türkçe', value: 'tr' },
+        { label: 'Русский', value: 'ru' },
+        { label: 'Nederlands', value: 'nl' },
       ],
       defaultValue: 'en',
       required: true,
       admin: {
         position: 'sidebar',
+      },
+      access: {
+        update: () => false,
       },
     },
     {
@@ -47,6 +71,7 @@ export const Categories: CollectionConfig = {
       required: true,
       admin: {
         position: 'sidebar',
+        hidden: true,
         description: 'Shared ID for all language variants of this document.',
       },
     },
@@ -61,4 +86,20 @@ export const Categories: CollectionConfig = {
       },
     },
   ],
+  endpoints: [
+    {
+      path: '/:id/clone-to',
+      method: 'post',
+      handler: cloneTranslationHandler,
+    },
+    {
+      path: '/:id/delete-group',
+      method: 'post',
+      handler: deleteGroupHandler,
+    },
+  ],
+  hooks: {
+    beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
+    beforeChange: [getBlockDuplicateSlug('categories'), syncGroupSlug],
+  },
 }

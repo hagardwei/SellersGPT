@@ -14,6 +14,8 @@ export const post1: (args: PostArgs) => RequiredDataFromCollectionSlug<'posts'> 
 }) => {
   return {
     slug: 'digital-horizons',
+    language: 'en',
+    translation_group_id: 'post-1-id',
     _status: 'published',
     authors: [author],
     content: {

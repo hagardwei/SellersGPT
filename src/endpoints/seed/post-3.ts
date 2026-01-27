@@ -7,7 +7,9 @@ export const post3: (args: PostArgs) => RequiredDataFromCollectionSlug<'posts'> 
   author,
 }) => {
   return {
-    slug: 'dollar-and-sense-the-financial-forecast',
+    slug: 'modern-javascript',
+    language: 'en',
+    translation_group_id: 'post-3-id',
     _status: 'published',
     authors: [author],
     content: {

@@ -12,6 +12,8 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
 }) => {
   return {
     slug: 'home',
+    language: 'en',
+    translation_group_id: 'home-page-id',
     _status: 'published',
     hero: {
       type: 'highImpact',

@@ -17,7 +17,13 @@ import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
-import { getValidateSlug } from '@/utilities/validateSlug'
+import { getValidateSlug } from '../../utilities/validateSlug'
+import { getBlockDuplicateSlug } from '../../utilities/blockDuplicateSlug'
+import { autoGenerateGroupId } from '../../utilities/autoGenerateGroupId'
+import { cloneTranslationHandler } from '../../utilities/cloneTranslation'
+import { syncGroupSlug } from '../../utilities/syncGroupSlug'
+import { validateUniqueGroupLanguage } from '../../utilities/validateUniqueGroupLanguage'
+import { deleteGroupHandler } from '../../utilities/deleteGroup'
 
 import {
   MetaDescriptionField,
@@ -35,9 +41,6 @@ export const Posts: CollectionConfig<'posts'> = {
     read: authenticatedOrPublished,
     update: authenticated,
   },
-  // This config controls what's populated by default when a post is referenced
-  // https://payloadcms.com/docs/queries/select#defaultpopulate-collection-config-property
-  // Type safe if the collection slug generic is passed to `CollectionConfig` - `CollectionConfig<'posts'>
   defaultPopulate: {
     title: true,
     slug: true,
@@ -64,8 +67,23 @@ export const Posts: CollectionConfig<'posts'> = {
         req,
       }),
     useAsTitle: 'title',
+    baseListFilter: () => ({
+      language: {
+        equals: 'en',
+      },
+    }),
   },
   fields: [
+    {
+      name: 'translation_hub',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/components/TranslationHub#TranslationHub',
+        },
+      },
+    },
     {
       name: 'title',
       type: 'text',
@@ -150,10 +168,7 @@ export const Posts: CollectionConfig<'posts'> = {
 
             MetaDescriptionField({}),
             PreviewField({
-              // if the `generateUrl` function is configured
               hasGenerateFn: true,
-
-              // field paths to match the target field for data
               titlePath: 'meta.title',
               descriptionPath: 'meta.description',
             }),
@@ -190,9 +205,6 @@ export const Posts: CollectionConfig<'posts'> = {
       hasMany: true,
       relationTo: 'users',
     },
-    // This field is only used to populate the user data via the `populateAuthors` hook
-    // This is because the `user` collection has access control locked to protect user privacy
-    // GraphQL will also not return mutated user data that differs from the underlying schema
     {
       name: 'populatedAuthors',
       type: 'array',
@@ -219,19 +231,22 @@ export const Posts: CollectionConfig<'posts'> = {
       type: 'select',
       options: [
         { label: 'English', value: 'en' },
-        { label: 'Spanish', value: 'es' },
-        { label: 'German', value: 'de' },
-        { label: 'French', value: 'fr' },
-        { label: 'Portuguese', value: 'pt' },
-        { label: 'Italian', value: 'it' },
-        { label: 'Turkish', value: 'tr' },
-        { label: 'Russian', value: 'ru' },
-        { label: 'Dutch', value: 'nl' },
+        { label: 'Español', value: 'es' },
+        { label: 'Deutsch', value: 'de' },
+        { label: 'Français', value: 'fr' },
+        { label: 'Português', value: 'pt' },
+        { label: 'Italiano', value: 'it' },
+        { label: 'Türkçe', value: 'tr' },
+        { label: 'Русский', value: 'ru' },
+        { label: 'Nederlands', value: 'nl' },
       ],
       defaultValue: 'en',
       required: true,
       admin: {
         position: 'sidebar',
+      },
+      access: {
+        update: () => false,
       },
     },
     {
@@ -240,6 +255,7 @@ export const Posts: CollectionConfig<'posts'> = {
       required: true,
       admin: {
         position: 'sidebar',
+        hidden: true,
         description: 'Shared ID for all language variants of this document.',
       },
     },
@@ -251,18 +267,33 @@ export const Posts: CollectionConfig<'posts'> = {
       validate: getValidateSlug('posts'),
       admin: {
         position: 'sidebar',
+        condition: (data) => data?.language === 'en',
       },
+    },
+  ],
+  endpoints: [
+    {
+      path: '/:id/clone-to',
+      method: 'post',
+      handler: cloneTranslationHandler,
+    },
+    {
+      path: '/:id/delete-group',
+      method: 'post',
+      handler: deleteGroupHandler,
     },
   ],
   hooks: {
     afterChange: [revalidatePost],
+    beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
+    beforeChange: [getBlockDuplicateSlug('posts'), syncGroupSlug],
     afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],
   },
   versions: {
     drafts: {
       autosave: {
-        interval: 100, // We set this interval for optimal live preview
+        interval: 100,
       },
       schedulePublish: true,
     },

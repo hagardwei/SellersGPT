@@ -27,9 +27,6 @@ export const generateMeta = async (args: {
 }): Promise<Metadata> => {
   const { doc, collectionSlug } = args
 
-
-  console.log("Recieved Doc: ", doc)
-
   const ogImage = getImageURL(doc?.meta?.image)
 
   const title = doc?.meta?.title
@@ -52,10 +49,7 @@ export const generateMeta = async (args: {
 
   // Find other language versions if we have a translation_group_id
   if (doc?.translation_group_id && collectionSlug) {
-    console.log("Finding Siblings")
-    console.log("Translation Group ID: ", doc.translation_group_id)
-    console.log("Collection Slug: ", collectionSlug)
-    console.log("Doc ID: ", doc.id)
+
     const payload = await getPayload({ config: configPromise })
     const siblings = await payload.find({
       collection: collectionSlug,
@@ -78,8 +72,6 @@ export const generateMeta = async (args: {
       },
     })
 
-    console.log("Siblings: ", siblings)
-
     const languageMap: Record<string, string> = {}
 
     // Add current doc to map
@@ -96,7 +88,6 @@ export const generateMeta = async (args: {
 
     alternates.languages = languageMap
 
-    console.log("Language Map: ", languageMap)
 
     // Set x-default to English version if available
     if (languageMap['en']) {

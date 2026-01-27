@@ -7,7 +7,9 @@ export const post2: (args: PostArgs) => RequiredDataFromCollectionSlug<'posts'> 
   author,
 }) => {
   return {
-    slug: 'global-gaze',
+    slug: 'traversing-the-syntax',
+    language: 'en',
+    translation_group_id: 'post-2-id',
     _status: 'published',
     authors: [author],
     content: {
