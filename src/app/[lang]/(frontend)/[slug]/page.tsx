@@ -23,6 +23,7 @@ export async function generateStaticParams() {
     pagination: false,
     select: {
       slug: true,
+      language: true,
     },
   })
 
@@ -30,8 +31,8 @@ export async function generateStaticParams() {
     ?.filter((doc) => {
       return doc.slug !== 'home'
     })
-    .map(({ slug }) => {
-      return { slug }
+    .map(({ slug, language }) => {
+      return { slug, lang: language }
     })
 
   return params
@@ -40,19 +41,19 @@ export async function generateStaticParams() {
 type Args = {
   params: Promise<{
     slug?: string
+    lang: string
   }>
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
   const { isEnabled: draft } = await draftMode()
-  const { slug = 'home' } = await paramsPromise
+  const { slug = 'home', lang } = await paramsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
-  const url = '/' + decodedSlug
-  let page: RequiredDataFromCollectionSlug<'pages'> | null
-
-  page = await queryPageBySlug({
+  const url = `/${lang}/${decodedSlug}`
+  const page: RequiredDataFromCollectionSlug<'pages'> = await queryPageBySlug({
     slug: decodedSlug,
+    lang,
   })
 
   // Remove this code once your website is seeded
@@ -81,17 +82,18 @@ export default async function Page({ params: paramsPromise }: Args) {
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
-  const { slug = 'home' } = await paramsPromise
+  const { slug = 'home', lang } = await paramsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
   const page = await queryPageBySlug({
     slug: decodedSlug,
+    lang,
   })
 
-  return generateMeta({ doc: page })
+  return generateMeta({ doc: page, collectionSlug: 'pages' })
 }
 
-const queryPageBySlug = cache(async ({ slug }: { slug: string }) => {
+const queryPageBySlug = cache(async ({ slug, lang }: { slug: string; lang: string }) => {
   const { isEnabled: draft } = await draftMode()
 
   const payload = await getPayload({ config: configPromise })
@@ -103,9 +105,18 @@ const queryPageBySlug = cache(async ({ slug }: { slug: string }) => {
     pagination: false,
     overrideAccess: draft,
     where: {
-      slug: {
-        equals: slug,
-      },
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        {
+          language: {
+            equals: lang,
+          },
+        },
+      ],
     },
   })
 

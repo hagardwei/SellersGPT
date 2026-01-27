@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Suchen",
+        "searchPlaceholder": "Suchen...",
+        "noResults": "Keine Ergebnisse gefunden.",
+        "menu": "Menü",
+        "close": "Schließen",
+        "home": "Startseite",
+        "posts": "Beiträge"
+    },
+    "posts": {
+        "title": "Beiträge",
+        "by": "Von",
+        "relatedPosts": "Ähnliche Beiträge"
+    }
+}

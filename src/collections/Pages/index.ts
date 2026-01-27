@@ -12,6 +12,7 @@ import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { revalidateDelete, revalidatePage } from './hooks/revalidatePage'
+import { getValidateSlug } from '@/utilities/validateSlug'
 
 import {
   MetaDescriptionField,
@@ -117,7 +118,45 @@ export const Pages: CollectionConfig<'pages'> = {
         position: 'sidebar',
       },
     },
-    slugField(),
+    {
+      name: 'language',
+      type: 'select',
+      options: [
+        { label: 'English', value: 'en' },
+        { label: 'Spanish', value: 'es' },
+        { label: 'German', value: 'de' },
+        { label: 'French', value: 'fr' },
+        { label: 'Portuguese', value: 'pt' },
+        { label: 'Italian', value: 'it' },
+        { label: 'Turkish', value: 'tr' },
+        { label: 'Russian', value: 'ru' },
+        { label: 'Dutch', value: 'nl' },
+      ],
+      defaultValue: 'en',
+      required: true,
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'translation_group_id',
+      type: 'text',
+      required: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Shared ID for all language variants of this document.',
+      },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      index: true,
+      label: 'Slug',
+      validate: getValidateSlug('pages'),
+      admin: {
+        position: 'sidebar',
+      },
+    },
   ],
   hooks: {
     afterChange: [revalidatePage],

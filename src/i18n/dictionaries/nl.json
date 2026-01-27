@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Zoeken",
+        "searchPlaceholder": "Zoeken...",
+        "noResults": "Geen resultaten gevonden.",
+        "menu": "Menu",
+        "close": "Sluiten",
+        "home": "Home",
+        "posts": "Berichten"
+    },
+    "posts": {
+        "title": "Berichten",
+        "by": "Door",
+        "relatedPosts": "Gerelateerde berichten"
+    }
+}

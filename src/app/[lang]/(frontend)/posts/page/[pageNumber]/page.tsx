@@ -14,11 +14,12 @@ export const revalidate = 600
 type Args = {
   params: Promise<{
     pageNumber: string
+    lang: string
   }>
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
-  const { pageNumber } = await paramsPromise
+  const { pageNumber, lang } = await paramsPromise
   const payload = await getPayload({ config: configPromise })
 
   const sanitizedPageNumber = Number(pageNumber)
@@ -31,8 +32,12 @@ export default async function Page({ params: paramsPromise }: Args) {
     limit: 12,
     page: sanitizedPageNumber,
     overrideAccess: false,
+    where: {
+      language: {
+        equals: lang,
+      },
+    },
   })
-
   return (
     <div className="pt-24 pb-24">
       <PageClient />
@@ -71,18 +76,26 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
-  const { totalDocs } = await payload.count({
-    collection: 'posts',
-    overrideAccess: false,
-  })
+  const locales = ['en', 'es', 'de', 'fr', 'pt', 'it', 'tr', 'ru', 'nl']
 
-  const totalPages = Math.ceil(totalDocs / 10)
+  const allParams = []
 
-  const pages: { pageNumber: string }[] = []
+  for (const lang of locales) {
+    const { totalDocs } = await payload.count({
+      collection: 'posts',
+      overrideAccess: false,
+      where: {
+        language: {
+          equals: lang,
+        },
+      },
+    })
 
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push({ pageNumber: String(i) })
+    const totalPages = Math.ceil(totalDocs / 12) // Limit is 12 in this file
+    for (let i = 1; i <= totalPages; i++) {
+      allParams.push({ pageNumber: String(i), lang })
+    }
   }
 
-  return pages
+  return allParams
 }

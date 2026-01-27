@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Rechercher",
+        "searchPlaceholder": "Rechercher...",
+        "noResults": "Aucun résultat trouvé.",
+        "menu": "Menu",
+        "close": "Fermer",
+        "home": "Accueil",
+        "posts": "Articles"
+    },
+    "posts": {
+        "title": "Articles",
+        "by": "Par",
+        "relatedPosts": "Articles connexes"
+    }
+}

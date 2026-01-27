@@ -3,17 +3,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import React, { useState, useEffect } from 'react'
 import { useDebounce } from '@/utilities/useDebounce'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
-export const Search: React.FC = () => {
+export const Search: React.FC<{ placeholder?: string }> = ({ placeholder = 'Search' }) => {
   const [value, setValue] = useState('')
   const router = useRouter()
+  const { lang } = useParams()
 
   const debouncedValue = useDebounce(value)
 
   useEffect(() => {
-    router.push(`/search${debouncedValue ? `?q=${debouncedValue}` : ''}`)
-  }, [debouncedValue, router])
+    router.push(`/${lang}/search${debouncedValue ? `?q=${debouncedValue}` : ''}`)
+  }, [debouncedValue, router, lang])
 
   return (
     <div>
@@ -23,14 +24,14 @@ export const Search: React.FC = () => {
         }}
       >
         <Label htmlFor="search" className="sr-only">
-          Search
+          {placeholder}
         </Label>
         <Input
           id="search"
           onChange={(event) => {
             setValue(event.target.value)
           }}
-          placeholder="Search"
+          placeholder={placeholder}
         />
         <button type="submit" className="sr-only">
           submit

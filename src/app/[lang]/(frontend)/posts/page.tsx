@@ -7,18 +7,26 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
+import { getDictionary } from '@/i18n/get-dictionary'
 
 export const dynamic = 'force-static'
 export const revalidate = 600
 
-export default async function Page() {
+export default async function Page({ params: paramsPromise }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await paramsPromise
   const payload = await getPayload({ config: configPromise })
+  const { general, posts: postsDictionary } = await getDictionary(lang)
 
   const posts = await payload.find({
     collection: 'posts',
     depth: 1,
     limit: 12,
     overrideAccess: false,
+    where: {
+      language: {
+        equals: lang,
+      },
+    },
     select: {
       title: true,
       slug: true,
@@ -32,7 +40,7 @@ export default async function Page() {
       <PageClient />
       <div className="container mb-16">
         <div className="prose dark:prose-invert max-w-none">
-          <h1>Posts</h1>
+          <h1>{postsDictionary.title}</h1>
         </div>
       </div>
 
@@ -56,8 +64,34 @@ export default async function Page() {
   )
 }
 
-export function generateMetadata(): Metadata {
+import { getServerSideURL } from '@/utilities/getURL'
+
+export async function generateMetadata({
+  params: paramsPromise,
+}: {
+  params: Promise<{ lang: string }>
+}): Promise<Metadata> {
+  const { lang } = await paramsPromise
+  const serverUrl = getServerSideURL()
+  const path = `/posts`
+  const canonicalUrl = `${serverUrl}/${lang}${path}`
+
   return {
     title: `Payload Website Template Posts`,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        en: `${serverUrl}/en${path}`,
+        es: `${serverUrl}/es${path}`,
+        de: `${serverUrl}/de${path}`,
+        fr: `${serverUrl}/fr${path}`,
+        pt: `${serverUrl}/pt${path}`,
+        it: `${serverUrl}/it${path}`,
+        tr: `${serverUrl}/tr${path}`,
+        ru: `${serverUrl}/ru${path}`,
+        nl: `${serverUrl}/nl${path}`,
+        'x-default': `${serverUrl}/en${path}`,
+      },
+    },
   }
 }

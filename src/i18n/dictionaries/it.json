@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Cerca",
+        "searchPlaceholder": "Cerca...",
+        "noResults": "Nessun risultato trovato.",
+        "menu": "Menu",
+        "close": "Chiudi",
+        "home": "Home",
+        "posts": "Articoli"
+    },
+    "posts": {
+        "title": "Articoli",
+        "by": "Di",
+        "relatedPosts": "Articoli correlati"
+    }
+}

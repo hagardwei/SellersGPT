@@ -10,6 +10,25 @@ export const searchFields: Field[] = [
     },
   },
   {
+    name: 'language',
+    type: 'select',
+    options: [
+      { label: 'English', value: 'en' },
+      { label: 'Spanish', value: 'es' },
+      { label: 'German', value: 'de' },
+      { label: 'French', value: 'fr' },
+      { label: 'Portuguese', value: 'pt' },
+      { label: 'Italian', value: 'it' },
+      { label: 'Turkish', value: 'tr' },
+      { label: 'Russian', value: 'ru' },
+      { label: 'Dutch', value: 'nl' },
+    ],
+    index: true,
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
     name: 'meta',
     label: 'Meta',
     type: 'group',

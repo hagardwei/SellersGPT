@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Buscar",
+        "searchPlaceholder": "Buscar...",
+        "noResults": "No se encontraron resultados.",
+        "menu": "Menú",
+        "close": "Cerrar",
+        "home": "Inicio",
+        "posts": "Publicaciones"
+    },
+    "posts": {
+        "title": "Publicaciones",
+        "by": "Por",
+        "relatedPosts": "Publicaciones relacionadas"
+    }
+}

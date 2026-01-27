@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Search",
+        "searchPlaceholder": "Search...",
+        "noResults": "No results found.",
+        "menu": "Menu",
+        "close": "Close",
+        "home": "Home",
+        "posts": "Posts"
+    },
+    "posts": {
+        "title": "Posts",
+        "by": "By",
+        "relatedPosts": "Related Posts"
+    }
+}

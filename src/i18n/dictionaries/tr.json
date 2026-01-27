@@ -1,0 +1,16 @@
+{
+    "general": {
+        "search": "Ara",
+        "searchPlaceholder": "Ara...",
+        "noResults": "Sonuç bulunamadı.",
+        "menu": "Menü",
+        "close": "Kapat",
+        "home": "Ana Sayfa",
+        "posts": "Gönderiler"
+    },
+    "posts": {
+        "title": "Gönderiler",
+        "by": "Yazan",
+        "relatedPosts": "İlgili Gönderiler"
+    }
+}

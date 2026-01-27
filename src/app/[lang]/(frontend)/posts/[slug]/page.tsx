@@ -14,6 +14,7 @@ import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { getDictionary } from '@/i18n/get-dictionary'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -25,11 +26,12 @@ export async function generateStaticParams() {
     pagination: false,
     select: {
       slug: true,
+      language: true,
     },
   })
 
-  const params = posts.docs.map(({ slug }) => {
-    return { slug }
+  const params = posts.docs.map(({ slug, language }) => {
+    return { slug, lang: language }
   })
 
   return params
@@ -38,18 +40,21 @@ export async function generateStaticParams() {
 type Args = {
   params: Promise<{
     slug?: string
+    lang: string
   }>
 }
 
 export default async function Post({ params: paramsPromise }: Args) {
   const { isEnabled: draft } = await draftMode()
-  const { slug = '' } = await paramsPromise
+  const { slug = '', lang } = await paramsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
-  const url = '/posts/' + decodedSlug
-  const post = await queryPostBySlug({ slug: decodedSlug })
+  const url = `/posts/${decodedSlug}`
+  const post = await queryPostBySlug({ slug: decodedSlug, lang })
 
   if (!post) return <PayloadRedirects url={url} />
+
+  const { posts: postsDictionary } = await getDictionary(lang)
 
   return (
     <article className="pt-16 pb-16">
@@ -69,6 +74,7 @@ export default async function Post({ params: paramsPromise }: Args) {
             <RelatedPosts
               className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"
               docs={post.relatedPosts.filter((post) => typeof post === 'object')}
+              title={postsDictionary.relatedPosts}
             />
           )}
         </div>
@@ -78,15 +84,15 @@ export default async function Post({ params: paramsPromise }: Args) {
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
-  const { slug = '' } = await paramsPromise
+  const { slug = '', lang } = await paramsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
-  const post = await queryPostBySlug({ slug: decodedSlug })
+  const post = await queryPostBySlug({ slug: decodedSlug, lang })
 
-  return generateMeta({ doc: post })
+  return generateMeta({ doc: post, collectionSlug: 'posts' })
 }
 
-const queryPostBySlug = cache(async ({ slug }: { slug: string }) => {
+const queryPostBySlug = cache(async ({ slug, lang }: { slug: string; lang: string }) => {
   const { isEnabled: draft } = await draftMode()
 
   const payload = await getPayload({ config: configPromise })
@@ -98,9 +104,18 @@ const queryPostBySlug = cache(async ({ slug }: { slug: string }) => {
     overrideAccess: draft,
     pagination: false,
     where: {
-      slug: {
-        equals: slug,
-      },
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        {
+          language: {
+            equals: lang,
+          },
+        },
+      ],
     },
   })
 

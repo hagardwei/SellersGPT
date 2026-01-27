@@ -11,13 +11,19 @@ export type RelatedPostsProps = {
   className?: string
   docs?: Post[]
   introContent?: DefaultTypedEditorState
+  title?: string
 }
 
 export const RelatedPosts: React.FC<RelatedPostsProps> = (props) => {
-  const { className, docs, introContent } = props
+  const { className, docs, introContent, title } = props
 
   return (
     <div className={clsx('lg:container', className)}>
+      {title && (
+        <div className="prose dark:prose-invert">
+          <h3 className="mb-6">{title}</h3>
+        </div>
+      )}
       {introContent && <RichText data={introContent} enableGutter={false} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 items-stretch">
