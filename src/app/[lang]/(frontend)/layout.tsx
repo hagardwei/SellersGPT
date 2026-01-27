@@ -10,6 +10,7 @@ import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
+import { TranslationProvider } from '@/providers/Translation'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 
@@ -41,9 +42,11 @@ export default async function RootLayout({
             }}
           />
 
-          <Header lang={lang} />
-          {children}
-          <Footer lang={lang} />
+          <TranslationProvider>
+            <Header lang={lang} />
+            {children}
+            <Footer lang={lang} />
+          </TranslationProvider>
         </Providers>
       </body>
     </html>

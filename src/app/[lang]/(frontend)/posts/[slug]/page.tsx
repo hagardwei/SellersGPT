@@ -15,6 +15,8 @@ import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { getDictionary } from '@/i18n/get-dictionary'
+import { getLanguageVariants } from '@/utilities/getLanguageVariants'
+import { TranslationSetter } from '@/components/TranslationSetter'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -55,9 +57,11 @@ export default async function Post({ params: paramsPromise }: Args) {
   if (!post) return <PayloadRedirects url={url} />
 
   const { posts: postsDictionary } = await getDictionary(lang)
+  const variants = await getLanguageVariants('posts', post.translation_group_id)
 
   return (
     <article className="pt-16 pb-16">
+      <TranslationSetter languages={variants} />
       <PageClient />
 
       {/* Allows redirects for valid pages too */}

@@ -12,6 +12,8 @@ import { RenderHero } from '@/heros/RenderHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { getLanguageVariants } from '@/utilities/getLanguageVariants'
+import { TranslationSetter } from '@/components/TranslationSetter'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -65,10 +67,12 @@ export default async function Page({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
-  const { hero, layout } = page
+  const { hero, layout, translation_group_id } = page
+  const variants = await getLanguageVariants('pages', translation_group_id)
 
   return (
     <article className="pt-16 pb-24">
+      <TranslationSetter languages={variants} />
       <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />
