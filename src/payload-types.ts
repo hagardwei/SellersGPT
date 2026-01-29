@@ -113,8 +113,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'website-info': WebsiteInfo;
+  };
+  globalsSelect: {
+    'website-info': WebsiteInfoSelect<false> | WebsiteInfoSelect<true>;
+  };
   locale: null;
   user: User & {
     collection: 'users';
@@ -1760,6 +1764,42 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "website-info".
+ */
+export interface WebsiteInfo {
+  id: number;
+  websiteName: string;
+  industry: string;
+  description: string;
+  goal: 'lead-generation' | 'product-showcase' | 'company-profile' | 'services';
+  referenceWebsite?: string | null;
+  targetAudience: string;
+  services: string;
+  brandTone: 'professional' | 'corporate' | 'friendly' | 'technical' | 'marketing-heavy';
+  isCompleted?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "website-info_select".
+ */
+export interface WebsiteInfoSelect<T extends boolean = true> {
+  websiteName?: T;
+  industry?: T;
+  description?: T;
+  goal?: T;
+  referenceWebsite?: T;
+  targetAudience?: T;
+  services?: T;
+  brandTone?: T;
+  isCompleted?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
