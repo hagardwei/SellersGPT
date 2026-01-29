@@ -6,7 +6,17 @@ import { Archive } from '../../blocks/ArchiveBlock/config'
 import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
+import { HeroBlock } from '@/blocks/Hero/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
+import { FeatureGrid } from '../../blocks/FeatureGrid/config'
+import { SplitBlock } from '../../blocks/Split/config'
+import { TestimonialsBlock } from '../../blocks/Testimonials/config'
+import { StatsBlock } from '../../blocks/Stats/config'
+import { LogoCloudBlock } from '../../blocks/LogoCloud/config'
+import { FAQBlock } from '../../blocks/FAQ/config'
+import { TimelineBlock } from '../../blocks/Timeline/config'
+import { GalleryBlock } from '../../blocks/Gallery/config'
+import { VideoBlock } from '../../blocks/Video/config'
 import { hero } from '../../heros/config'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
@@ -82,15 +92,27 @@ export const Pages: CollectionConfig<'pages'> = {
       type: 'tabs',
       tabs: [
         {
-          fields: [hero],
-          label: 'Hero',
-        },
-        {
           fields: [
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
+              blocks: [
+                HeroBlock,
+                CallToAction,
+                Content,
+                MediaBlock,
+                Archive,
+                FormBlock,
+                FeatureGrid,
+                SplitBlock,
+                TestimonialsBlock,
+                StatsBlock,
+                LogoCloudBlock,
+                FAQBlock,
+                TimelineBlock,
+                GalleryBlock,
+                VideoBlock,
+              ],
               required: true,
               admin: {
                 initCollapsed: true,

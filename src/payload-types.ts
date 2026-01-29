@@ -159,50 +159,23 @@ export interface UserAuthOperations {
 export interface Page {
   id: number;
   title: string;
-  hero: {
-    type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
-    richText?: {
-      root: {
-        type: string;
-        children: {
-          type: any;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-    links?:
-      | {
-          link: {
-            type?: ('reference' | 'custom') | null;
-            newTab?: boolean | null;
-            reference?:
-              | ({
-                  relationTo: 'pages';
-                  value: number | Page;
-                } | null)
-              | ({
-                  relationTo: 'posts';
-                  value: number | Post;
-                } | null);
-            url?: string | null;
-            label: string;
-            /**
-             * Choose how the link should be rendered.
-             */
-            appearance?: ('default' | 'outline') | null;
-          };
-          id?: string | null;
-        }[]
-      | null;
-    media?: (number | null) | Media;
-  };
-  layout: (CallToActionBlock | ContentBlock | MediaBlock | ArchiveBlock | FormBlock)[];
+  layout: (
+    | HeroBlock
+    | CallToActionBlock
+    | ContentBlock
+    | MediaBlock
+    | ArchiveBlock
+    | FormBlock
+    | FeatureGridBlock
+    | SplitBlock
+    | TestimonialsBlock
+    | StatsBlock
+    | LogoCloudBlock
+    | FAQBlock
+    | TimelineBlock
+    | GalleryBlock
+    | VideoBlock
+  )[];
   meta?: {
     title?: string | null;
     /**
@@ -221,6 +194,43 @@ export interface Page {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HeroBlock".
+ */
+export interface HeroBlock {
+  variant: 'simple' | 'media' | 'split';
+  title?: string | null;
+  subTitle?: string | null;
+  links?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Choose how the link should be rendered.
+           */
+          appearance?: ('default' | 'outline') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  media?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'hero';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -787,6 +797,324 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeatureGridBlock".
+ */
+export interface FeatureGridBlock {
+  heading?: string | null;
+  subheading?: string | null;
+  items?:
+    | {
+        icon?: (number | null) | Media;
+        title: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  columns?: ('2' | '3' | '4') | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'featureGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SplitBlock".
+ */
+export interface SplitBlock {
+  title: string;
+  richText?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  media: number | Media;
+  mediaPosition?: ('left' | 'right') | null;
+  links?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Choose how the link should be rendered.
+           */
+          appearance?: ('default' | 'outline') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'split';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialsBlock".
+ */
+export interface TestimonialsBlock {
+  heading?: string | null;
+  testimonials?:
+    | {
+        quote: string;
+        author: string;
+        role?: string | null;
+        company?: string | null;
+        image?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'testimonials';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StatsBlock".
+ */
+export interface StatsBlock {
+  heading?: string | null;
+  stats?:
+    | {
+        value: string;
+        label: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'stats';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LogoCloudBlock".
+ */
+export interface LogoCloudBlock {
+  heading?: string | null;
+  logos?:
+    | {
+        logo: number | Media;
+        name?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'logoCloud';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock".
+ */
+export interface FAQBlock {
+  heading?: string | null;
+  questions?:
+    | {
+        question: string;
+        answer: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faq';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TimelineBlock".
+ */
+export interface TimelineBlock {
+  heading?: string | null;
+  steps?:
+    | {
+        date: string;
+        title: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'timeline';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GalleryBlock".
+ */
+export interface GalleryBlock {
+  heading?: string | null;
+  images?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  columns?: ('2' | '3' | '4') | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'gallery';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "VideoBlock".
+ */
+export interface VideoBlock {
+  title?: string | null;
+  videoType?: ('youtube' | 'vimeo' | 'selfHosted') | null;
+  /**
+   * URL for YouTube/Vimeo or Direct link to video file
+   */
+  url: string;
+  thumbnail?: (number | null) | Media;
+  aspectRatio?: ('video' | '4/3' | 'square') | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'video';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
  */
 export interface Header {
@@ -1140,36 +1468,24 @@ export interface PayloadMigration {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
-  hero?:
-    | T
-    | {
-        type?: T;
-        richText?: T;
-        links?:
-          | T
-          | {
-              link?:
-                | T
-                | {
-                    type?: T;
-                    newTab?: T;
-                    reference?: T;
-                    url?: T;
-                    label?: T;
-                    appearance?: T;
-                  };
-              id?: T;
-            };
-        media?: T;
-      };
   layout?:
     | T
     | {
+        hero?: T | HeroBlockSelect<T>;
         cta?: T | CallToActionBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
         mediaBlock?: T | MediaBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
+        featureGrid?: T | FeatureGridBlockSelect<T>;
+        split?: T | SplitBlockSelect<T>;
+        testimonials?: T | TestimonialsBlockSelect<T>;
+        stats?: T | StatsBlockSelect<T>;
+        logoCloud?: T | LogoCloudBlockSelect<T>;
+        faq?: T | FAQBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
+        video?: T | VideoBlockSelect<T>;
       };
   meta?:
     | T
@@ -1185,6 +1501,33 @@ export interface PagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HeroBlock_select".
+ */
+export interface HeroBlockSelect<T extends boolean = true> {
+  variant?: T;
+  title?: T;
+  subTitle?: T;
+  links?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  media?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1267,6 +1610,284 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeatureGridBlock_select".
+ */
+export interface FeatureGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  subheading?: T;
+  items?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  columns?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SplitBlock_select".
+ */
+export interface SplitBlockSelect<T extends boolean = true> {
+  title?: T;
+  richText?: T;
+  media?: T;
+  mediaPosition?: T;
+  links?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialsBlock_select".
+ */
+export interface TestimonialsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  testimonials?:
+    | T
+    | {
+        quote?: T;
+        author?: T;
+        role?: T;
+        company?: T;
+        image?: T;
+        id?: T;
+      };
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StatsBlock_select".
+ */
+export interface StatsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  stats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        description?: T;
+        id?: T;
+      };
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LogoCloudBlock_select".
+ */
+export interface LogoCloudBlockSelect<T extends boolean = true> {
+  heading?: T;
+  logos?:
+    | T
+    | {
+        logo?: T;
+        name?: T;
+        id?: T;
+      };
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FAQBlock_select".
+ */
+export interface FAQBlockSelect<T extends boolean = true> {
+  heading?: T;
+  questions?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TimelineBlock_select".
+ */
+export interface TimelineBlockSelect<T extends boolean = true> {
+  heading?: T;
+  steps?:
+    | T
+    | {
+        date?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GalleryBlock_select".
+ */
+export interface GalleryBlockSelect<T extends boolean = true> {
+  heading?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  columns?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "VideoBlock_select".
+ */
+export interface VideoBlockSelect<T extends boolean = true> {
+  title?: T;
+  videoType?: T;
+  url?: T;
+  thumbnail?: T;
+  aspectRatio?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
   id?: T;
   blockName?: T;
 }
