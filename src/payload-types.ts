@@ -74,6 +74,7 @@ export interface Config {
     users: User;
     header: Header;
     footer: Footer;
+    'ai-jobs': AiJob;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -98,6 +99,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1183,6 +1185,64 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-jobs".
+ */
+export interface AiJob {
+  id: number;
+  type: 'GENERATE_WEBSITE' | 'GENERATE_PAGE' | 'REGENERATE_PAGE';
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  /**
+   * Current execution step (e.g. "INITIALIZATION", "PLANNING")
+   */
+  step?: string | null;
+  prompt?: string | null;
+  /**
+   * Parameters passed to the AI (prompts, context, etc.)
+   */
+  input_payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Raw output or structured result from the AI
+   */
+  output_payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Error details if the job failed
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  retry_count?: number | null;
+  /**
+   * The website job that spawned this page job
+   */
+  parent_job?: (number | null) | AiJob;
+  completed_at?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1399,6 +1459,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'footer';
         value: number | Footer;
+      } | null)
+    | ({
+        relationTo: 'ai-jobs';
+        value: number | AiJob;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2107,6 +2171,24 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-jobs_select".
+ */
+export interface AiJobsSelect<T extends boolean = true> {
+  type?: T;
+  status?: T;
+  step?: T;
+  prompt?: T;
+  input_payload?: T;
+  output_payload?: T;
+  error?: T;
+  retry_count?: T;
+  parent_job?: T;
+  completed_at?: T;
   updatedAt?: T;
   createdAt?: T;
 }

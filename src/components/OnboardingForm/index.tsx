@@ -74,8 +74,18 @@ const WebsiteInfoForm: React.FC = () => {
             })
 
             if (response.ok) {
+                const data = await response.json()
                 setIsCompleted(true)
-                // Optionally refresh the page or redirect
+
+                // Trigger AI generation
+                await fetch('/api/globals/website-info/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                })
+
                 router.refresh()
             } else {
                 const errData = await response.json()

@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload'
 import { authenticated } from '../../access/authenticated'
+import { runAIJob } from '../../utilities/ai/orchestrator'
 
 export const WebsiteInfo: GlobalConfig = {
     slug: 'website-info',
@@ -75,6 +76,43 @@ export const WebsiteInfo: GlobalConfig = {
             defaultValue: false,
             admin: {
                 position: 'sidebar',
+            },
+        },
+    ],
+    endpoints: [
+        {
+            path: '/generate',
+            method: 'post',
+            handler: async (req) => {
+                const { payload } = req
+
+                try {
+                    // 1. Create the master job
+                    const job = await payload.create({
+                        collection: 'ai-jobs',
+                        data: {
+                            type: 'GENERATE_WEBSITE',
+                            status: 'pending',
+                            step: 'PENDING',
+                            input_payload: req.json ? await req.json() : {},
+                        },
+                    })
+
+                    // 2. Trigger background processing
+                    // Firing and forgetting for now, in a real env this would be a queue/webhook
+                    runAIJob(job.id)
+
+                    return Response.json({
+                        success: true,
+                        message: 'Website generation triggered.',
+                        jobId: job.id,
+                    })
+                } catch (error: any) {
+                    return Response.json({
+                        success: false,
+                        error: error.message,
+                    }, { status: 500 })
+                }
             },
         },
     ],

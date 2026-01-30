@@ -213,6 +213,51 @@ export const Pages: CollectionConfig<'pages'> = {
       method: 'post',
       handler: deleteGroupHandler,
     },
+    {
+      path: '/:id/regenerate',
+      method: 'post',
+      handler: async (req) => {
+        const { payload } = req
+        const id = req.routeParams?.id as string
+
+        try {
+          // 1. Fetch the page to get metadata
+          const page = await payload.findByID({
+            collection: 'pages',
+            id,
+          })
+
+          // 2. Create REGENERATE_PAGE job
+          const job = await payload.create({
+            collection: 'ai-jobs',
+            data: {
+              type: 'REGENERATE_PAGE',
+              status: 'pending',
+              input_payload: {
+                pageId: id,
+                slug: (page as any).slug,
+                title: (page as any).title,
+                blocks: (page as any).layout?.map((b: any) => b.blockType) || [],
+              },
+            },
+          })
+
+          // 3. Trigger orchestrator
+          const { runAIJob } = await import('../../utilities/ai/orchestrator')
+          runAIJob(job.id)
+
+          return Response.json({
+            success: true,
+            jobId: job.id,
+          })
+        } catch (error: any) {
+          return Response.json({
+            success: false,
+            error: error.message,
+          }, { status: 500 })
+        }
+      },
+    },
   ],
   hooks: {
     afterChange: [revalidatePage],

@@ -12,6 +12,7 @@ export const validateUniqueGroupLanguage: CollectionBeforeValidateHook = async (
     const id = originalDoc?.id
 
     if (!language || !groupId) return data
+    if (!req?.payload) return data
 
     // Check if another document in the same group already has this language
     const result = await req.payload.find({

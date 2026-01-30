@@ -9,6 +9,7 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
+import { AIJobs } from './collections/AIJobs'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { WebsiteInfo } from './globals/WebsiteInfo/config'
@@ -63,7 +64,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Header, Footer],
+  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [WebsiteInfo],
   plugins,
