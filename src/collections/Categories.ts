@@ -28,15 +28,6 @@ export const Categories: CollectionConfig = {
   },
   fields: [
     {
-      name: 'name',
-      type: 'text',
-      required: true,
-      admin: {
-        position: 'sidebar',
-      },
-    },
-
-    {
       name: 'translation_hub',
       type: 'ui',
       admin: {
