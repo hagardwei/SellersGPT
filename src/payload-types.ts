@@ -410,6 +410,7 @@ export interface FolderInterface {
  */
 export interface Category {
   id: number;
+  name: string;
   title: string;
   language: 'en' | 'es' | 'de' | 'fr' | 'pt' | 'it' | 'tr' | 'ru' | 'nl';
   /**
@@ -1224,6 +1225,18 @@ export interface AiJob {
    * Error details if the job failed
    */
   error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * List of blocks that were skipped due to validation errors
+   */
+  skipped_blocks?:
     | {
         [k: string]: unknown;
       }
@@ -2086,6 +2099,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
   title?: T;
   language?: T;
   translation_group_id?: T;
@@ -2186,6 +2200,7 @@ export interface AiJobsSelect<T extends boolean = true> {
   input_payload?: T;
   output_payload?: T;
   error?: T;
+  skipped_blocks?: T;
   retry_count?: T;
   parent_job?: T;
   completed_at?: T;

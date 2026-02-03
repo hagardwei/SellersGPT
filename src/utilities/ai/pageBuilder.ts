@@ -44,8 +44,13 @@ BLOCK REFERENCE:
 ${blockRef}
 `
 
+    const internalLinkingContext = pageJob.allPlannedSlugs
+        ? `\nAVAILABLE PAGES FOR INTERNAL LINKING:\n- ${pageJob.allPlannedSlugs.join('\n- ')}\nUse these exact slugs for internal reference links (buttons, nav items).`
+        : ''
+
     const userPrompt = `Generate the content for the page "${pageJob.title}" (slug: ${pageJob.slug}).
 The page should contain the following sequence of blocks: ${pageJob.blocks.join(', ')}.
+${internalLinkingContext}
 
 CONTEXT:
 Industry: ${websiteInfo.industry}

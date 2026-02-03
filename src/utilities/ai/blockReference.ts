@@ -50,7 +50,6 @@ export const ContentSchema = {
     description: 'Flexible block for layout and rich text columns.',
     fields: {
         columns: 'Array of { size: oneThird | half | twoThirds | full, richText: LexicalJSON, enableLink: boolean, link: SharedLink }',
-        settings: SharedSettings,
     },
 }
 
@@ -70,7 +69,6 @@ export const CallToActionSchema = {
     fields: {
         richText: 'LexicalJSON',
         links: 'Array of SharedLink (max 2)',
-        settings: SharedSettings,
     },
 }
 
@@ -80,7 +78,6 @@ export const FAQSchema = {
     fields: {
         heading: 'string',
         questions: 'Array of { question: string, answer: LexicalJSON }',
-        settings: SharedSettings,
     },
 }
 
@@ -101,7 +98,6 @@ export const StatsSchema = {
     fields: {
         heading: 'string',
         stats: 'Array of { value: string (e.g. "10k+"), label: string, description: string }',
-        settings: SharedSettings,
     },
 }
 
@@ -134,7 +130,6 @@ export const TimelineSchema = {
     fields: {
         heading: 'string',
         steps: 'Array of { date: string, title: string, description: textarea }',
-        settings: SharedSettings,
     },
 }
 
@@ -147,7 +142,6 @@ export const VideoSchema = {
         url: 'string (URL for YouTube/Vimeo or Direct link)',
         thumbnail: 'upload (optional, used for self-hosted)',
         aspectRatio: '16:9 | 4:3 | 1:1',
-        settings: SharedSettings,
     },
 }
 
@@ -174,9 +168,11 @@ export const MediaBlockSchema = {
 
 export const FormBlockSchema = {
     slug: 'formBlock',
-    description: 'Insert a pre-defined form (contact, signup, etc).',
+    description: 'Insert a pre-defined form (contact, signup, etc). If the form does not exist, you can define it here using formTitle and formFields.',
     fields: {
-        form: 'relationship to forms (required)',
+        form: 'relationship to forms (slug of existing form)',
+        formTitle: 'string (Only if form does not exist)',
+        formFields: 'Array of { blockType: text | textarea | select | email | checkbox | message, name: string, label: string, required: boolean, options: Array of { label, value } (for select) } (Only if form does not exist)',
         enableIntro: 'boolean',
         introContent: 'LexicalJSON',
     },

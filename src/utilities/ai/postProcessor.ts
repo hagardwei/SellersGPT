@@ -1,5 +1,7 @@
 import { Payload } from 'payload'
+import crypto from 'crypto'
 import { toLexical } from './lexicalConverter'
+import { AllBlocks } from './blockReference'
 
 /**
  * Recursively removes any keys with explicit null values from an object or array.
@@ -7,13 +9,15 @@ import { toLexical } from './lexicalConverter'
  */
 export function recursiveCleanNulls(data: any): any {
     if (Array.isArray(data)) {
-        return data.map(item => recursiveCleanNulls(item))
+        return data
+            .map(item => recursiveCleanNulls(item))
+            .filter(item => item !== undefined && item !== null) // Remove both undefined and null
     }
     if (typeof data === 'object' && data !== null) {
         const cleaned: any = {}
         for (const key in data) {
             const value = data[key]
-            if (value !== null) {
+            if (value !== undefined && value !== null) { // Remove both undefined and null
                 cleaned[key] = recursiveCleanNulls(value)
             }
         }
@@ -72,20 +76,82 @@ async function uploadMedia(url: string, payload: Payload, attempt = 1): Promise<
 }
 
 /**
+ * Generic helper to resolve a slug to an ID for a given collection.
+ */
+async function resolveSlugToId(collection: any, slug: string, payload: Payload): Promise<string | number | null> {
+    if (!slug || typeof slug !== 'string') return null
+
+    // If it looks like a numeric ID, return it as a number
+    if (/^\d+$/.test(slug)) return parseInt(slug, 10)
+
+    try {
+        const result = await payload.find({
+            collection,
+            where: {
+                slug: { equals: slug }
+            },
+            limit: 1,
+        })
+        return result.docs[0]?.id || null
+    } catch (error) {
+        console.error(`[AI Post-Processor] Failed to resolve slug "${slug}" in collection "${collection}":`, error)
+        return null
+    }
+}
+
+/**
  * Transforms a single AI link object to Payload's link group format.
  */
-function transformSingleLink(linkItem: any): any {
+async function transformSingleLink(linkItem: any, payload: Payload): Promise<any> {
     if (!linkItem || typeof linkItem !== 'object') return linkItem
 
-    // If it's already in the correct format, skip
-    if (linkItem.type && (linkItem.url || linkItem.reference)) return linkItem
+    // 1. Extract and normalize fields
+    const rawType = linkItem.type || 'custom'
+    const reference = linkItem.reference || linkItem.page || linkItem.url
+    const label = linkItem.label || linkItem.text || linkItem.title || 'Learn More'
+    const rawAppearance = linkItem.appearance || 'default'
+    const newTab = !!linkItem.newTab
 
+    // Normalize type - only allow 'reference' or 'custom'
+    const type = rawType === 'reference' ? 'reference' : 'custom'
+
+    // Normalize appearance - only allow 'default' or 'outline'
+    const appearance = (rawAppearance === 'outline' || rawAppearance === 'secondary') ? 'outline' : 'default'
+
+    if (type === 'reference' && reference) {
+        let resolvedId = reference
+
+        if (typeof reference === 'string' && isNaN(Number(reference))) {
+            const id = await resolveSlugToId('pages', reference, payload)
+            if (id) {
+                resolvedId = id
+            } else {
+                // Fall through to custom below if page not found
+                resolvedId = null
+            }
+        }
+
+        if (resolvedId) {
+            return {
+                type: 'reference',
+                reference: {
+                    relationTo: 'pages',
+                    value: resolvedId,
+                },
+                label,
+                appearance,
+                newTab,
+            }
+        }
+    }
+
+    // Default to custom
     return {
-        type: linkItem.type || 'custom',
-        url: linkItem.url || '#',
-        label: linkItem.text || linkItem.label || 'Learn More',
-        appearance: linkItem.appearance || 'default',
-        newTab: linkItem.newTab || false
+        type: 'custom',
+        url: linkItem.url || (typeof reference === 'string' ? `/${reference}` : '#'),
+        label,
+        appearance,
+        newTab,
     }
 }
 
@@ -124,6 +190,7 @@ async function resolveCategories(slugs: string[], payload: Payload): Promise<(st
                         title: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' '),
                         slug: slug,
                         language: 'en',
+                        translation_group_id: crypto.randomUUID(),
                     } as any
                 })
                 resolvedIds.push(newCat.id)
@@ -133,116 +200,323 @@ async function resolveCategories(slugs: string[], payload: Payload): Promise<(st
         }
     }
 
-    return resolvedIds
+    return resolvedIds.filter(id => id !== null && id !== undefined)
+}
+
+/**
+ * Creates a form based on AI definition if it doesn't exist.
+ */
+async function createFormFromAI(block: any, payload: Payload): Promise<string | number | null> {
+    const title = block.formTitle || block.form || 'New Contact Form'
+
+    try {
+        // Check if exists
+        const existing = await payload.find({
+            collection: 'forms',
+            where: {
+                title: { equals: title }
+            }
+        })
+
+        if (existing.docs.length > 0) {
+            return existing.docs[0].id
+        }
+
+        // Create new form
+        console.log(`[AI Post-Processor] Creating new form: ${title}`)
+        const fields = Array.isArray(block.formFields) ? block.formFields.map((f: any) => {
+            const field: any = {
+                ...f,
+                blockType: f.blockType || 'text',
+                name: f.name || f.label?.toLowerCase().replace(/\s+/g, '_') || 'field',
+                label: f.label || f.name || 'Field',
+                required: !!f.required,
+            }
+
+            if (field.blockType === 'message' && typeof field.message === 'string') {
+                field.message = toLexical(field.message)
+            }
+
+            return field
+        }) : [
+            { blockType: 'text', name: 'full_name', label: 'Full Name', required: true },
+            { blockType: 'email', name: 'email', label: 'Email Address', required: true },
+            { blockType: 'textarea', name: 'message', label: 'Message', required: true }
+        ]
+
+        const newForm = await payload.create({
+            collection: 'forms',
+            data: {
+                title,
+                fields,
+                submitButtonLabel: 'Submit',
+                confirmationType: 'message',
+                confirmationMessage: toLexical('Thank you for your message! We will get back to you soon.'),
+            } as any
+        })
+        return newForm.id
+    } catch (error) {
+        console.error(`[AI Post-Processor] Failed to create form "${title}":`, error)
+        return null
+    }
 }
 
 /**
  * Transforms AI's link format to Payload's link group format.
  */
-function transformLinks(links: any[]): any[] {
+async function transformLinks(links: any[], payload: Payload): Promise<any[]> {
     if (!Array.isArray(links)) return links
 
-    return links.map(linkItem => {
-        // If it's already in the correct format, skip
-        if (linkItem.link) return linkItem
+    const transformed = await Promise.all(links.map(async (item) => {
+        if (!item || typeof item !== 'object') return item
+
+        // If the AI already provided the { link: { ... } } structure, 
+        // we still need to process the inner 'link' object to fix field names (text -> label, etc)
+        const innerLink = item.link || item
 
         return {
-            link: transformSingleLink(linkItem)
+            link: await transformSingleLink(innerLink, payload)
         }
-    })
+    }))
+
+    return transformed
+}
+
+/**
+ * Validates a single block against its definition in AllBlocks.
+ */
+function validateBlock(block: any): { valid: boolean; error?: string } {
+    if (!block || typeof block !== 'object') {
+        return { valid: false, error: 'Block is not an object or is null' }
+    }
+
+    if (!block.blockType) {
+        return { valid: false, error: 'Missing blockType' }
+    }
+
+    // Find the schema for this block type
+    const schema = AllBlocks.find(s => s.slug === block.blockType)
+    if (!schema) {
+        return { valid: false, error: `Block type "${block.blockType}" is not recognized in the AI schema definition.` }
+    }
+
+    // Check required fields based on schema strings
+    for (const [fieldName, fieldDesc] of Object.entries(schema.fields)) {
+        const isRequired = typeof fieldDesc === 'string' && fieldDesc.includes('(required)')
+
+        // Handle nested required fields in arrays if possible, 
+        // but for now focus on top-level required fields of the block.
+        if (isRequired && (block[fieldName] === undefined || block[fieldName] === null || block[fieldName] === '')) {
+            return {
+                valid: false,
+                error: `Missing required field "${fieldName}" for block type "${block.blockType}". Expected: ${fieldDesc}`
+            }
+        }
+
+        // Basic type validation if description mentions "Array"
+        if (typeof fieldDesc === 'string' && fieldDesc.includes('Array')) {
+            const data = block[fieldName]
+            if (data !== undefined && !Array.isArray(data)) {
+                return {
+                    valid: false,
+                    error: `Field "${fieldName}" should be an Array for block type "${block.blockType}".`
+                }
+            }
+
+            // Basic check for empty required arrays
+            if (isRequired && (!data || data.length === 0)) {
+                return {
+                    valid: false,
+                    error: `Required array "${fieldName}" is empty or missing for block type "${block.blockType}".`
+                }
+            }
+        }
+    }
+
+    // Special logic for blocks with conditional requirements or complex objects
+    if (block.blockType === 'hero') {
+        if (!block.title) return { valid: false, error: 'Hero block must have a title.' }
+        if ((block.variant === 'media' || block.variant === 'split') && !block.media) {
+            return { valid: false, error: 'Hero variant "media" or "split" requires a media upload.' }
+        }
+    }
+
+    if (block.blockType === 'formBlock') {
+        if (!block.form && !block.formTitle && !block.formFields) {
+            return { valid: false, error: 'Form block must have either an existing form slug or a new form definition (formTitle/formFields).' }
+        }
+    }
+
+    return { valid: true }
 }
 
 /**
  * Recursively processes the layout blocks to handle media, links, and rich text.
+ * Now returns both the processed layout and any validation/processing errors.
  */
-export async function postProcessLayout(layout: any[], payload: Payload): Promise<any[]> {
-    if (!Array.isArray(layout)) return layout
+export async function postProcessLayout(
+    layout: any[],
+    payload: Payload,
+): Promise<{ processedLayout: any[]; validationErrors: any[] }> {
+    if (!Array.isArray(layout)) return { processedLayout: [], validationErrors: [] }
 
     console.log(`[AI Post-Processor] Cleaning and processing ${layout.length} blocks...`)
 
-    // 1. Clean nulls globally (AI often output "link": null which crashes Payload validation)
+    const validationErrors: any[] = []
+    const processedLayout: any[] = []
+
+    // 1. Initial clean of the whole layout
     const cleanedLayout = recursiveCleanNulls(layout)
-    const processedLayout = []
 
-    for (const block of cleanedLayout) {
-        const newBlock = { ...block }
-        console.log(`[AI Post-Processor] Processing block: ${newBlock.blockType}`)
+    for (let i = 0; i < cleanedLayout.length; i++) {
+        const block = cleanedLayout[i]
 
-        // 1. Process Links
-        if (newBlock.links && Array.isArray(newBlock.links)) {
-            newBlock.links = transformLinks(newBlock.links)
-        }
-        if (newBlock.link && typeof newBlock.link === 'object') {
-            newBlock.link = transformSingleLink(newBlock.link)
-        }
-
-        // 2. Process Rich Text
-        if (newBlock.richText && typeof newBlock.richText === 'string') {
-            newBlock.richText = toLexical(newBlock.richText)
-        }
-
-        // 3. Convert numbers to strings for specific fields (like columns)
-        if (typeof newBlock.columns === 'number') {
-            newBlock.columns = String(newBlock.columns)
-        }
-
-        // 4. Process Media fields at top level of block
-        const mediaFields = ['media', 'icon', 'logo', 'image']
-        for (const field of mediaFields) {
-            if (newBlock[field] && typeof newBlock[field] === 'string' && newBlock[field].startsWith('http')) {
-                newBlock[field] = await uploadMedia(newBlock[field], payload)
+        try {
+            // 2. Validate block structure
+            const validation = validateBlock(block)
+            if (!validation.valid) {
+                console.warn(`[AI Post-Processor] Block ${i} (${block?.blockType}) failed validation: ${validation.error}`)
+                validationErrors.push({
+                    index: i,
+                    type: block?.blockType || 'unknown',
+                    error: validation.error,
+                })
+                continue
             }
-        }
 
-        // 5. Specific Block Handling
-        if (newBlock.blockType === 'archive') {
-            if (newBlock.categories && Array.isArray(newBlock.categories)) {
-                newBlock.categories = await resolveCategories(newBlock.categories, payload)
+            // 3. Strip unknown fields and prepare newBlock
+            const schema = AllBlocks.find(s => s.slug === block.blockType)!
+            const newBlock: any = { blockType: block.blockType }
+
+            // Only copy fields defined in the schema
+            for (const fieldName in schema.fields) {
+                if (block[fieldName] !== undefined) {
+                    newBlock[fieldName] = block[fieldName]
+                }
             }
-            if (newBlock.introContent && typeof newBlock.introContent === 'string') {
-                newBlock.introContent = toLexical(newBlock.introContent)
+
+            console.log(`[AI Post-Processor] Processing block ${i}: ${newBlock.blockType}`)
+
+            // 3. Process Links
+            if (newBlock.links && Array.isArray(newBlock.links)) {
+                newBlock.links = await transformLinks(newBlock.links, payload)
             }
-        }
+            if (newBlock.link && typeof newBlock.link === 'object') {
+                newBlock.link = await transformSingleLink(newBlock.link, payload)
+            }
 
-        // 6. Process nested arrays (like FeatureGrid items or FAQ questions)
-        for (const key in newBlock) {
-            if (Array.isArray(newBlock[key])) {
-                newBlock[key] = await Promise.all(newBlock[key].map(async (item: any) => {
-                    if (typeof item === 'object' && item !== null) {
-                        const newItem = { ...item }
+            // 4. Process Rich Text
+            if (newBlock.richText && typeof newBlock.richText === 'string') {
+                newBlock.richText = toLexical(newBlock.richText)
+            }
 
-                        // Handle links in array items
-                        if (newItem.links && Array.isArray(newItem.links)) {
-                            newItem.links = transformLinks(newItem.links)
-                        }
-                        if (newItem.link && typeof newItem.link === 'object') {
-                            newItem.link = transformSingleLink(newItem.link)
-                        }
+            // 5. Convert numbers to strings for specific fields
+            if (typeof newBlock.columns === 'number') {
+                newBlock.columns = String(newBlock.columns)
+            }
 
-                        // Handle media in array items
-                        for (const field of mediaFields) {
-                            if (newItem[field] && typeof newItem[field] === 'string' && newItem[field].startsWith('http')) {
-                                newItem[field] = await uploadMedia(newItem[field], payload)
-                            }
-                        }
+            // 6. Process Media fields at top level
+            const mediaFields = ['media', 'icon', 'logo', 'image']
+            for (const field of mediaFields) {
+                if (newBlock[field] && typeof newBlock[field] === 'string' && newBlock[field].startsWith('http')) {
+                    newBlock[field] = await uploadMedia(newBlock[field], payload)
+                }
+            }
 
-                        // Handle rich text in array items
-                        if (newItem.richText && typeof newItem.richText === 'string') {
-                            newItem.richText = toLexical(newItem.richText)
-                        }
-                        if (newItem.answer && typeof newItem.answer === 'string') { // Special case for FAQ
-                            newItem.answer = toLexical(newItem.answer)
-                        }
+            // 7. Specific Block Handling
+            if (newBlock.blockType === 'archive') {
+                if (newBlock.categories && Array.isArray(newBlock.categories)) {
+                    newBlock.categories = await resolveCategories(newBlock.categories, payload)
+                }
+                if (newBlock.introContent && typeof newBlock.introContent === 'string') {
+                    newBlock.introContent = toLexical(newBlock.introContent)
+                }
+            }
 
-                        return newItem
+            if (newBlock.blockType === 'formBlock') {
+                if (typeof newBlock.form === 'string') {
+                    const resolvedFormId = await resolveSlugToId('forms', newBlock.form, payload)
+                    if (resolvedFormId) {
+                        newBlock.form = resolvedFormId
+                    } else if (newBlock.formTitle || newBlock.formFields) {
+                        // Create it!
+                        const createdId = await createFormFromAI(newBlock, payload)
+                        if (createdId) {
+                            newBlock.form = createdId
+                        } else {
+                            throw new Error(`Failed to create form "${newBlock.formTitle || newBlock.form}"`)
+                        }
+                    } else {
+                        throw new Error(`Could not resolve form slug "${newBlock.form}" to an existing form and no definition provided.`)
                     }
-                    return item
-                }))
+                } else if (!newBlock.form && (newBlock.formTitle || newBlock.formFields)) {
+                    // Create it even if form slug is missing but title/fields exist
+                    const createdId = await createFormFromAI(newBlock, payload)
+                    if (createdId) {
+                        newBlock.form = createdId
+                    } else {
+                        throw new Error(`Failed to create form "${newBlock.formTitle || 'Untitled'}"`)
+                    }
+                }
             }
-        }
 
-        processedLayout.push(newBlock)
+            // 8. Process nested arrays (FeatureGrid, FAQ, etc.)
+            for (const key in newBlock) {
+                if (Array.isArray(newBlock[key])) {
+                    const items = await Promise.all(
+                        newBlock[key].map(async (item: any) => {
+                            if (typeof item === 'object' && item !== null) {
+                                const newItem = { ...item }
+
+                                if (newItem.links && Array.isArray(newItem.links)) {
+                                    newItem.links = await transformLinks(newItem.links, payload)
+                                }
+                                if (newItem.link && typeof newItem.link === 'object') {
+                                    newItem.link = await transformSingleLink(newItem.link, payload)
+                                }
+
+                                for (const field of mediaFields) {
+                                    if (
+                                        newItem[field] &&
+                                        typeof newItem[field] === 'string' &&
+                                        newItem[field].startsWith('http')
+                                    ) {
+                                        newItem[field] = await uploadMedia(newItem[field], payload)
+                                    }
+                                }
+
+                                if (newItem.richText && typeof newItem.richText === 'string') {
+                                    newItem.richText = toLexical(newItem.richText)
+                                }
+                                if (newItem.answer && typeof newItem.answer === 'string') {
+                                    newItem.answer = toLexical(newItem.answer)
+                                }
+
+                                return newItem
+                            }
+                            return item
+                        }),
+                    )
+                    newBlock[key] = items.filter(item => item !== null && item !== undefined)
+                }
+            }
+
+            processedLayout.push(newBlock)
+        } catch (error: any) {
+            console.error(`[AI Post-Processor] Unexpected error processing block ${i} (${block?.blockType}):`, error)
+            validationErrors.push({
+                index: i,
+                type: block?.blockType || 'unknown',
+                error: `Processing Error: ${error.message}`,
+            })
+        }
     }
 
-    return processedLayout
+    // Final deep clean for Drizzle
+    const finalLayout = recursiveCleanNulls(processedLayout)
+
+    return {
+        processedLayout: finalLayout,
+        validationErrors,
+    }
 }

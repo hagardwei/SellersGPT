@@ -87,6 +87,13 @@ export const AIJobs: CollectionConfig = {
             },
         },
         {
+            name: 'skipped_blocks',
+            type: 'json',
+            admin: {
+                description: 'List of blocks that were skipped due to validation errors',
+            },
+        },
+        {
             name: 'retry_count',
             type: 'number',
             defaultValue: 0,

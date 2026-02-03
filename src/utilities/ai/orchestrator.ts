@@ -1,4 +1,5 @@
 import { getPayload } from 'payload'
+import crypto from 'crypto'
 import configPromise from '@payload-config'
 import { AiJob } from '@/payload-types'
 import { planWebsiteStructure } from './planner'
@@ -70,6 +71,7 @@ export const runAIJob = async (jobId: string | number) => {
                 })
 
                 // 4. Create child jobs for each page
+                const allPlannedSlugs = plan.pages.map(p => p.slug)
                 for (const p of plan.pages) {
                     await payload.create({
                         collection: 'ai-jobs',
@@ -80,7 +82,8 @@ export const runAIJob = async (jobId: string | number) => {
                             input_payload: {
                                 slug: p.slug,
                                 title: p.title,
-                                blocks: p.blocks
+                                blocks: p.blocks,
+                                allPlannedSlugs: allPlannedSlugs // Navigation context
                             }
                         }
                     })
@@ -129,26 +132,40 @@ export const runAIJob = async (jobId: string | number) => {
                 })
 
                 // 3. Post-process: Convert strings to Lexical JSON, upload Media, and transform Links
-                const processedLayout = await postProcessLayout(pageData.layout, payload)
+                const { processedLayout, validationErrors } = await postProcessLayout(pageData.layout, payload)
 
                 // 4. Create the page
                 await payload.update({
                     collection: 'ai-jobs',
                     id: jobId,
-                    data: { step: 'CREATING_DOCUMENT' }
+                    data: {
+                        step: 'CREATING_DOCUMENT',
+                        skipped_blocks: validationErrors as any,
+                    }
                 })
+
+                if (processedLayout.length === 0) {
+                    throw new Error('All generated blocks failed validation. No page created.')
+                }
+
+                console.log(`[AI Orchestrator] Processed Layout (${processedLayout.length} blocks): ${JSON.stringify(processedLayout, null, 2)}`)
 
                 let newPage;
                 try {
+                    console.log(`[AI Orchestrator] Creating page: ${input.slug}`)
+                    const creationData = {
+                        title: input.title || input.slug,
+                        slug: input.slug,
+                        layout: processedLayout,
+                        _status: 'published',
+                        language: 'en',
+                        translation_group_id: crypto.randomUUID(),
+                        publishedAt: new Date().toISOString(),
+                    }
+                    console.log(`[AI Orchestrator] Creation Data:`, JSON.stringify(creationData, null, 2))
                     newPage = await payload.create({
                         collection: 'pages',
-                        data: {
-                            title: input.title || input.slug,
-                            slug: input.slug,
-                            layout: processedLayout,
-                            _status: 'published',
-                            language: 'en',
-                        } as any,
+                        data: creationData as any,
                     })
                 } catch (createError: any) {
                     console.error(`[AI Orchestrator] Failed to create page "${input.slug}":`)
@@ -159,22 +176,26 @@ export const runAIJob = async (jobId: string | number) => {
                     }
 
                     // Log a snippet of the problematic layout for debugging
-                    console.error('[AI Orchestrator] Problematic Layout Snippet (First Block):', JSON.stringify(processedLayout[0], null, 2))
+                    if (processedLayout && processedLayout.length > 0) {
+                        console.error('[AI Orchestrator] Problematic Layout Snippet (First Block):', JSON.stringify(processedLayout[0], null, 2))
+                    }
 
                     throw createError
                 }
 
                 // 5. Mark as completed
-                await payload.update({
-                    collection: 'ai-jobs',
-                    id: jobId,
-                    data: {
-                        status: 'completed',
-                        step: 'COMPLETED',
-                        output_payload: { ai_output: pageData as any, pageId: newPage.id },
-                        completed_at: new Date().toISOString()
-                    }
-                })
+                if (newPage) {
+                    await payload.update({
+                        collection: 'ai-jobs',
+                        id: jobId,
+                        data: {
+                            status: 'completed',
+                            step: 'COMPLETED',
+                            output_payload: { ai_output: pageData as any, pageId: newPage.id },
+                            completed_at: new Date().toISOString()
+                        }
+                    })
+                }
 
                 break
             }
@@ -194,7 +215,16 @@ export const runAIJob = async (jobId: string | number) => {
                     data: { step: 'GENERATING_CONTENT' }
                 })
 
-                const { data: pageData, prompt } = await buildPageContent(input, websiteInfo)
+                // Get all existing slugs for linking context
+                const allPages = await payload.find({
+                    collection: 'pages',
+                    limit: 100,
+                    select: { slug: true }
+                })
+                const allPlannedSlugs = allPages.docs.map(p => p.slug)
+                const enrichedInput = { ...input, allPlannedSlugs }
+
+                const { data: pageData, prompt } = await buildPageContent(enrichedInput, websiteInfo)
                 if (!pageData) throw new Error('AI failed to generate page content.')
 
                 // Save prompt to job
@@ -207,14 +237,21 @@ export const runAIJob = async (jobId: string | number) => {
                 })
 
                 // 3. Post-process: Convert strings to Lexical JSON, upload Media, and transform Links
-                const processedLayout = await postProcessLayout(pageData.layout, payload)
+                const { processedLayout, validationErrors } = await postProcessLayout(pageData.layout, payload)
 
                 // 3. Update the existing page
                 await payload.update({
                     collection: 'ai-jobs',
                     id: jobId,
-                    data: { step: 'CREATING_DOCUMENT' }
+                    data: {
+                        step: 'CREATING_DOCUMENT',
+                        skipped_blocks: validationErrors as any,
+                    }
                 })
+
+                if (processedLayout.length === 0) {
+                    throw new Error('All generated blocks failed validation. Page update skipped.')
+                }
 
                 try {
                     await payload.update({
