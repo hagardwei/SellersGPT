@@ -51,6 +51,7 @@ export class OpenAIService implements AIModelService {
                 response_format: schema ? { type: 'json_object' } : undefined,
             })
 
+            console.log(response, "response")
             const content = response.choices[0]?.message?.content
 
             if (!content) {

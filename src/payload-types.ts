@@ -410,7 +410,6 @@ export interface FolderInterface {
  */
 export interface Category {
   id: number;
-  name: string;
   title: string;
   language: 'en' | 'es' | 'de' | 'fr' | 'pt' | 'it' | 'tr' | 'ru' | 'nl';
   /**
@@ -2099,7 +2098,6 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
-  name?: T;
   title?: T;
   language?: T;
   translation_group_id?: T;

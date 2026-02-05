@@ -19,6 +19,8 @@ const WebsiteInfoForm: React.FC = () => {
     const [error, setError] = useState<string | null>(null)
     const [isCompleted, setIsCompleted] = useState(false)
     const router = useRouter()
+    
+    console.log('OnboardingForm mounted', { loading, isCompleted })
 
     useEffect(() => {
         const fetchData = async () => {
@@ -26,6 +28,7 @@ const WebsiteInfoForm: React.FC = () => {
                 const response = await fetch('/api/globals/website-info')
                 if (response.ok) {
                     const data = await response.json()
+                    console.log('Fetched website-info:', data)
                     if (data.isCompleted) {
                         setIsCompleted(true)
                     } else {
@@ -72,6 +75,8 @@ const WebsiteInfoForm: React.FC = () => {
                     isCompleted: true,
                 }),
             })
+
+            console.log(response, "=======respo")
 
             if (response.ok) {
                 const data = await response.json()

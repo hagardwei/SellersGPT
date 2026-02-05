@@ -107,8 +107,11 @@ export const runAIJob = async (jobId: string | number) => {
                     slug: 'website-info'
                 }) as unknown as WebsiteInfo
 
+                console.log(websiteInfo, "websiteInfo")
+
                 const input = job.input_payload as any
                 if (!input || !input.slug) throw new Error('Invalid page input payload.')
+                console.log(input, "input")
 
                 // 2. Generate content
                 await payload.update({
@@ -117,7 +120,11 @@ export const runAIJob = async (jobId: string | number) => {
                     data: { step: 'GENERATING_CONTENT' }
                 })
 
+                console.log(input, "input")
+
                 const { data: pageData, prompt } = await buildPageContent(input, websiteInfo)
+
+                console.log(pageData, "pageData")
 
                 if (!pageData) throw new Error('AI failed to generate page content.')
 

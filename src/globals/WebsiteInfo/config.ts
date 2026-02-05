@@ -85,7 +85,7 @@ export const WebsiteInfo: GlobalConfig = {
             method: 'post',
             handler: async (req) => {
                 const { payload } = req
-
+                console.log(req)
                 try {
                     // 1. Create the master job
                     const job = await payload.create({
