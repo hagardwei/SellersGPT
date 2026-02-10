@@ -16,15 +16,14 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINnNvGZ7uQjm4x+njXS2Kv9YoZYYE91BIqaroz2dSrhd apple@Devexhub }}
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
       - name: Deploy to droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
-          cd /home/ubuntu/app || mkdir -p /home/ubuntu/app
-          cd /home/ubuntu/app
+          cd /home/ubuntu/app/SellersGPT || exit 1
           git fetch --all
           git reset --hard origin/main
-          docker compose down
-          docker compose up -d --build
+          docker-compose down
+          docker-compose up -d --build
           "
