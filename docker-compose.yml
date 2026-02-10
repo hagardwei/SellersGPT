@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: next-payload
     ports:
       - "3000:3000"
@@ -15,10 +17,10 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres-staging
-    environment:
-      POSTGRES_DB: payload
-      POSTGRES_USER: payload
-      POSTGRES_PASSWORD: payloadpassword
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
