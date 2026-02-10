@@ -18,11 +18,10 @@ export const syncGroupSlug: CollectionBeforeChangeHook = async ({
     const newSlug = data?.slug
     const oldSlug = originalDoc?.slug
     const groupId = data?.translation_group_id || originalDoc?.translation_group_id
-
     if (newSlug && oldSlug && newSlug !== oldSlug && groupId) {
         // Find all siblings in the same group
         const siblings = await req.payload.find({
-            collection: collection.slug as any,
+            collection: collection.slug as any, 
             where: {
                 and: [
                     {

@@ -14,6 +14,7 @@ import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { getLanguageVariants } from '@/utilities/getLanguageVariants'
 import { TranslationSetter } from '@/components/TranslationSetter'
+import { getHreflangs } from '@/utilities/getHreflangs'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -29,16 +30,14 @@ export async function generateStaticParams() {
     },
   })
 
-  const params = pages.docs
-    ?.filter((doc) => {
-      return doc.slug !== 'home'
-    })
-    .map(({ slug, language }) => {
-      return { slug, lang: language }
-    })
+  const params = pages.docs.map(({ slug, language }) => ({
+    slug,
+    lang: language,
+  }))
 
-  return params
-}
+
+    return params
+  }
 
 type Args = {
   params: Promise<{
@@ -67,11 +66,11 @@ export default async function Page({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
-  const { hero, layout, translation_group_id } = page
+  const { layout, translation_group_id } = page
   const variants = await getLanguageVariants('pages', translation_group_id)
 
   return (
-    <article className="pt-16 pb-24">
+    <article className="pb-16">
       <TranslationSetter languages={variants} />
       <PageClient />
       {/* Allows redirects for valid pages too */}
@@ -79,7 +78,7 @@ export default async function Page({ params: paramsPromise }: Args) {
 
       {draft && <LivePreviewListener />}
 
-      <RenderHero {...hero} />
+      {/* <RenderHero {...hero} /> */}
       <RenderBlocks blocks={layout} />
     </article>
   )
@@ -94,7 +93,14 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
     lang,
   })
 
-  return generateMeta({ doc: page, collectionSlug: 'pages' })
+  const alternates = await getHreflangs('pages', (page as any)?.translation_group_id)
+
+  return {
+    ...generateMeta({ doc: page, collectionSlug: 'pages' }),
+    alternates: {
+      language: alternates
+    }
+  }
 }
 
 const queryPageBySlug = cache(async ({ slug, lang }: { slug: string; lang: string }) => {
@@ -123,6 +129,8 @@ const queryPageBySlug = cache(async ({ slug, lang }: { slug: string; lang: strin
       ],
     },
   })
+
+  console.log(result)
 
   return result.docs?.[0] || null
 })

@@ -16,6 +16,7 @@ import { WebsiteInfo } from './globals/WebsiteInfo/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+import { Translations } from './collections/Translations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -64,7 +65,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs],
+  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [WebsiteInfo],
   plugins,

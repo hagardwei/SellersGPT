@@ -28,7 +28,7 @@ const WebsiteInfoForm: React.FC = () => {
                 const response = await fetch('/api/globals/website-info')
                 if (response.ok) {
                     const data = await response.json()
-                    console.log('Fetched website-info:', data)
+
                     if (data.isCompleted) {
                         setIsCompleted(true)
                     } else {

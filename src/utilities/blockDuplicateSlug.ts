@@ -4,39 +4,36 @@ export const getBlockDuplicateSlug = (collection: string): CollectionBeforeChang
     return async ({ data, req, originalDoc, operation }) => {
         const slug = data?.slug || originalDoc?.slug
         const language = data?.language || originalDoc?.language
-        const id = originalDoc?.id
 
-        if (!slug || !language) return data
+        // Only needed for update operation
+        const id = originalDoc?.id  
+
+        console.log("#########################", slug, language, req.context, originalDoc)
+
+        if (!slug || !language || req?.context?.aiJob) return data
 
         const payload = req.payload
+
+        // Build the where filter for duplicates
+        const where: any = {
+            and: [
+                { slug: { equals: slug } },
+                { language: { equals: language } },
+            ],
+        }
+
+        // Exclude the current document if this is an update
+        if (operation === 'update' && id) {
+            where.and.push({
+                id: { not_equals: id },
+            })
+        }
 
         const result = await payload.find({
             collection: collection as any,
             overrideAccess: true,
-            draft: true, // Check both draft and published
-            where: {
-                and: [
-                    {
-                        slug: {
-                            equals: slug,
-                        },
-                    },
-                    {
-                        language: {
-                            equals: language,
-                        },
-                    },
-                    ...(id
-                        ? [
-                            {
-                                id: {
-                                    not_equals: id,
-                                },
-                            },
-                        ]
-                        : []),
-                ],
-            },
+            draft: operation !== 'create',
+            where,
             limit: 1,
             pagination: false,
         })

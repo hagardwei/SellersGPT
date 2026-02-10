@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAuthenticated } from '../access/adminAuthenticated'
 import { authenticated } from '../access/authenticated'
+import { aiJobQueue } from '@/lib/redis'
 
 export const AIJobs: CollectionConfig = {
     slug: 'ai-jobs',
@@ -24,6 +25,7 @@ export const AIJobs: CollectionConfig = {
                 { label: 'Generate Website', value: 'GENERATE_WEBSITE' },
                 { label: 'Generate Page', value: 'GENERATE_PAGE' },
                 { label: 'Regenerate Page', value: 'REGENERATE_PAGE' },
+                { label: 'Translate Document', value: 'TRANSLATE_DOCUMENT' },
             ],
         },
         {
@@ -99,12 +101,49 @@ export const AIJobs: CollectionConfig = {
             defaultValue: 0,
         },
         {
+            name: 'review_score',
+            type: 'number',
+            admin: {
+                description: 'Content quality score from AI reviewer (0-100)',
+                position: 'sidebar',
+            },
+        },
+        {
+            name: 'review_issues',
+            type: 'json',
+            admin: {
+                description: 'SEO and content issues found by AI reviewer',
+            },
+        },
+        {
+            name: 'retry_reason',
+            type: 'text',
+            admin: {
+                description: 'Reason for content regeneration retry',
+            },
+        },
+        {
             name: 'parent_job',
             type: 'relationship',
             relationTo: 'ai-jobs',
             admin: {
                 description: 'The website job that spawned this page job',
             },
+        },
+        {
+            name: 'target_language',
+            type: 'select',
+            options: [
+                { label: 'English', value: 'en' },
+                { label: 'Español', value: 'es' },
+                // { label: 'Deutsch', value: 'de' },
+                // { label: 'Français', value: 'fr' },
+                // { label: 'Português', value: 'pt' },
+                // { label: 'Italiano', value: 'it' },
+                // { label: 'Türkçe', value: 'tr' },
+                // { label: 'Русский', value: 'ru' },
+                // { label: 'Nederlands', value: 'nl' },
+            ]
         },
         {
             name: 'completed_at',
@@ -131,10 +170,19 @@ export const AIJobs: CollectionConfig = {
                         },
                     })
 
-                    const { runAIJob } = await import('../utilities/ai/orchestrator')
-                    runAIJob(id)
+                    await aiJobQueue.add(`ai-job-${id}`, {aiJobId: id}, {
+                        attempts: 3,
+                        backoff: {type: 'exponential', delay: 5000},
+                        removeOnComplete: true,
+                        removeOnFail: false
+                    })
 
-                    return Response.json({ success: true, message: 'Job started' })
+                    return Response.json({success: true, message: 'Job enqueued'});
+
+                    // const { runAIJob } = await import('../utilities/ai/orchestrator')
+                    // runAIJob(id)
+
+                    // return Response.json({ success: true, message: 'Job started' })
                 } catch (error: any) {
                     return Response.json({ success: false, error: error.message }, { status: 500 })
                 }

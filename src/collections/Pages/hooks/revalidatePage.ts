@@ -4,7 +4,38 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 
 import type { Page } from '../../../payload-types'
 
-export const revalidatePage: CollectionAfterChangeHook<Page> = ({
+const REVALIDATE_ENDPOINT = `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`
+// const SECRET = process.env.PAYLOAD_SECRET
+
+console.log("+++++++++++++++++++++++++++++++++++")
+console.log("+++++++++++++++++++++++++++++++++++")
+console.log("+++++++++++++++++++++++++++++++++++")
+console.log("+++++++++++++++++++++++++++++++++++")
+console.log("+++++++++++++++++++++++++++++++++++")
+console.log("+++++++++++++++++++++++++++++++++++")
+console.log("+++++++++++++++++++++++++++++++++++")
+async function requestRevalidate(path: string, language: Page['language']) {
+  try {
+    await fetch(REVALIDATE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        // secret: SECRET,
+        path,
+        tags: [
+          'pages',
+          `pages-${language}`,
+          'pages-sitemap',
+          `pages-sitemap-${language}`,
+        ],
+      }),
+    })
+  } catch (err) {
+    console.error('[Revalidate] Failed to request revalidation:', err)
+  }
+}
+
+export const revalidatePage: CollectionAfterChangeHook<Page> = async ({
   doc,
   previousDoc,
   req: { payload, context },
@@ -12,31 +43,22 @@ export const revalidatePage: CollectionAfterChangeHook<Page> = ({
   if (!context.disableRevalidate) {
     if (doc._status === 'published') {
       const path = doc.slug === 'home' ? '/' : `/${doc.slug}`
-
-      payload.logger.info(`Revalidating page at path: ${path}`)
-
-      revalidatePath(path)
-      revalidateTag('pages-sitemap')
+      await requestRevalidate(path, doc.language)
     }
 
     // If the page was previously published, we need to revalidate the old path
     if (previousDoc?._status === 'published' && doc._status !== 'published') {
       const oldPath = previousDoc.slug === 'home' ? '/' : `/${previousDoc.slug}`
-
-      payload.logger.info(`Revalidating old page at path: ${oldPath}`)
-
-      revalidatePath(oldPath)
-      revalidateTag('pages-sitemap')
+      await requestRevalidate(oldPath, previousDoc.language)
     }
   }
   return doc
 }
 
-export const revalidateDelete: CollectionAfterDeleteHook<Page> = ({ doc, req: { context } }) => {
+export const revalidateDelete: CollectionAfterDeleteHook<Page> = async ({ doc, req: { context } }) => {
   if (!context.disableRevalidate) {
     const path = doc?.slug === 'home' ? '/' : `/${doc?.slug}`
-    revalidatePath(path)
-    revalidateTag('pages-sitemap')
+    await requestRevalidate(path, doc.language)
   }
 
   return doc

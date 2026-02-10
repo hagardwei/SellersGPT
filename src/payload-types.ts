@@ -75,6 +75,7 @@ export interface Config {
     header: Header;
     footer: Footer;
     'ai-jobs': AiJob;
+    translations: Translation;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -100,6 +101,7 @@ export interface Config {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
+    translations: TranslationsSelect<false> | TranslationsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -193,6 +195,7 @@ export interface Page {
    */
   translation_group_id: string;
   slug?: string | null;
+  deletedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1189,7 +1192,7 @@ export interface Footer {
  */
 export interface AiJob {
   id: number;
-  type: 'GENERATE_WEBSITE' | 'GENERATE_PAGE' | 'REGENERATE_PAGE';
+  type: 'GENERATE_WEBSITE' | 'GENERATE_PAGE' | 'REGENERATE_PAGE' | 'TRANSLATE_DOCUMENT';
   status: 'pending' | 'running' | 'completed' | 'failed';
   /**
    * Current execution step (e.g. "INITIALIZATION", "PLANNING")
@@ -1246,10 +1249,59 @@ export interface AiJob {
     | null;
   retry_count?: number | null;
   /**
+   * Content quality score from AI reviewer (0-100)
+   */
+  review_score?: number | null;
+  /**
+   * SEO and content issues found by AI reviewer
+   */
+  review_issues?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Reason for content regeneration retry
+   */
+  retry_reason?: string | null;
+  /**
    * The website job that spawned this page job
    */
   parent_job?: (number | null) | AiJob;
+  target_language?: ('en' | 'es') | null;
   completed_at?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "translations".
+ */
+export interface Translation {
+  id: number;
+  /**
+   * The shared ID that connects all language variants of a document.
+   */
+  translation_group_id: string;
+  source_language: 'en' | 'es' | 'de' | 'fr' | 'pt' | 'it' | 'tr' | 'ru' | 'nl';
+  translations?:
+    | {
+        language: 'en' | 'es' | 'de' | 'fr' | 'pt' | 'it' | 'tr' | 'ru' | 'nl';
+        status: 'pending' | 'translating' | 'completed' | 'failed';
+        /**
+         * The AI job responsible for this translation.
+         */
+        job_id?: (number | null) | AiJob;
+        error?: string | null;
+        completed_at?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  source_hash?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1477,6 +1529,10 @@ export interface PayloadLockedDocument {
         value: number | AiJob;
       } | null)
     | ({
+        relationTo: 'translations';
+        value: number | Translation;
+      } | null)
+    | ({
         relationTo: 'redirects';
         value: number | Redirect;
       } | null)
@@ -1574,6 +1630,7 @@ export interface PagesSelect<T extends boolean = true> {
   language?: T;
   translation_group_id?: T;
   slug?: T;
+  deletedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2200,8 +2257,33 @@ export interface AiJobsSelect<T extends boolean = true> {
   error?: T;
   skipped_blocks?: T;
   retry_count?: T;
+  review_score?: T;
+  review_issues?: T;
+  retry_reason?: T;
   parent_job?: T;
+  target_language?: T;
   completed_at?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "translations_select".
+ */
+export interface TranslationsSelect<T extends boolean = true> {
+  translation_group_id?: T;
+  source_language?: T;
+  translations?:
+    | T
+    | {
+        language?: T;
+        status?: T;
+        job_id?: T;
+        error?: T;
+        completed_at?: T;
+        id?: T;
+      };
+  source_hash?: T;
   updatedAt?: T;
   createdAt?: T;
 }

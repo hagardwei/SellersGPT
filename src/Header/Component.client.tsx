@@ -8,11 +8,13 @@ import type { Header } from '@/payload-types'
 
 import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
+import { fields } from '@payloadcms/plugin-form-builder'
 
 interface HeaderClientProps {
   data: Header
   lang: string
 }
+
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data, lang }) => {
   /* Storing the value in a useState to avoid hydration errors */
@@ -29,9 +31,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, lang }) => {
     if (headerTheme && headerTheme !== theme) setTheme(headerTheme)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerTheme])
-
   return (
-    <header className="container relative z-20   " {...(theme ? { 'data-theme': theme } : {})}>
+    <header className="pl-4 pr-4 relative z-20 bg-card" {...(theme ? { 'data-theme': theme } : {})}>
       <div className="py-8 flex justify-between">
         <Link href={`/${lang}`}>
           <Logo loading="eager" priority="high" className="invert dark:invert-0" />
