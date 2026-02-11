@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to droplet
         run: |
-          ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
+          ssh -o StrictHostKeyChecking=no ubuntu@159.223.55.25"
           mkdir -p /home/ubuntu/app/SellersGPT
           cd /home/ubuntu/app/SellersGPT
 
