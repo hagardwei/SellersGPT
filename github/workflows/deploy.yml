@@ -21,9 +21,27 @@ jobs:
       - name: Deploy to droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
-          cd /home/ubuntu/app/SellersGPT || exit 1
+          mkdir -p /home/ubuntu/app/SellersGPT
+          cd /home/ubuntu/app/SellersGPT
+
+          # Pull latest code
           git fetch --all
           git reset --hard origin/main
-          docker-compose down
-          docker-compose up -d --build
+
+          # Ensure Docker Compose installed
+          if ! command -v docker >/dev/null 2>&1; then
+            curl -fsSL https://get.docker.com | sh
+          fi
+          if ! docker compose version >/dev/null 2>&1; then
+            apt update && apt install -y docker-compose-plugin
+          fi
+
+          # Create .env.production if it doesn't exist
+          if [ ! -f .env.production ]; then
+            echo \"${{ secrets.PROD_ENV_FILE }}\" > .env.production
+          fi
+
+          # Start Docker Compose
+          docker compose down
+          docker compose up -d --build
           "
