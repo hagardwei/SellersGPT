@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to droplet
         run: |
-          ssh -o StrictHostKeyChecking=no root@129.212.239.171 "
+          ssh -o StrictHostKeyChecking=no root@129.212.239.171 << 'EOF'
             mkdir -p /home/ubuntu/app/SellersGPT
             cd /home/ubuntu/app/SellersGPT
 
@@ -38,10 +38,11 @@ jobs:
 
             # Create .env.production if missing
             if [ ! -f .env.production ]; then
-              echo \"${{ secrets.PROD_ENV_FILE }}\" > .env.production
+              echo "${{ secrets.PROD_ENV_FILE }}" > .env.production
             fi
 
             # Start Docker Compose
             docker compose down
             docker compose up -d --build
-          "
+          EOF
+
