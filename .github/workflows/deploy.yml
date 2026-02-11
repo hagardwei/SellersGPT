@@ -24,9 +24,13 @@ jobs:
             mkdir -p /home/ubuntu/app/SellersGPT
             cd /home/ubuntu/app/SellersGPT
 
-            # If not a git repo yet, clone
+             # Clone or update repo
             if [ ! -d .git ]; then
-              git clone https://github.com/hagardwei/SellersGPT.git .
+              if [ \"\$(ls -A /home/ubuntu/app/SellersGPT)\" ]; then
+                echo 'Directory not empty but not a git repo, cleaning...'
+                rm -rf /home/ubuntu/app/SellersGPT/*
+              fi
+              git clone https://github.com/<your-username>/<your-repo>.git .
             else
               git fetch --all
               git reset --hard origin/main
