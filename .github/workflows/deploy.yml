@@ -1,4 +1,4 @@
-name: Production Deploy
+name: CI/CD Deploy to Droplet
 
 on:
   push:
@@ -6,41 +6,42 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/next-payload:latest .
-
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/next-payload:latest
-
-      - name: Deploy to Droplet
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p /var/www/app/ssl
-            cd /var/www/app
-            echo "${{ secrets.PROD_ENV_FILE }}" > .env.production
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
-            # Generate SSL if missing
-            if [ ! -f ssl/selfsigned.crt ]; then
-              openssl req -x509 -nodes -days 365 \
-                -newkey rsa:2048 \
-                -keyout ssl/selfsigned.key \
-                -out ssl/selfsigned.crt \
-                -subj "/CN=$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address || curl -s https://ifconfig.me)"
-            fi
+      - name: Deploy to droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
+          mkdir -p /home/ubuntu/app/SellersGPT
+          cd /home/ubuntu/app/SellersGPT
 
-            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-            docker compose down
-            docker compose up -d
+          # Pull latest code
+          git fetch --all
+          git reset --hard origin/main
+
+          # Ensure Docker Compose installed
+          if ! command -v docker >/dev/null 2>&1; then
+            curl -fsSL https://get.docker.com | sh
+          fi
+          if ! docker compose version >/dev/null 2>&1; then
+            apt update && apt install -y docker-compose-plugin
+          fi
+
+          # Create .env.production if it doesn't exist
+          if [ ! -f .env.production ]; then
+            echo \"${{ secrets.PROD_ENV_FILE }}\" > .env.production
+          fi
+
+          # Start Docker Compose
+          docker compose down
+          docker compose up -d --build
+          "
