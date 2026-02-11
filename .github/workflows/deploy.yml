@@ -13,9 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set PROD_ENV_CONTENT
-        run: echo "PROD_ENV_CONTENT=${{ secrets.PROD_ENV_FILE }}" >> $GITHUB_ENV
-
       - name: Deploy to droplet via SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -23,16 +20,15 @@ jobs:
 
       - name: Deploy to droplet
         run: |
-          ssh -o StrictHostKeyChecking=no root@129.212.239.171 << 'EOF'
-            set -e
-            APP_DIR=/home/ubuntu/app/SellersGPT
-            cd $APP_DIR
+          ssh -o StrictHostKeyChecking=no root@129.212.239.171 "
+            mkdir -p /home/ubuntu/app/SellersGPT
+            cd /home/ubuntu/app/SellersGPT
 
             # Pull latest code
             git fetch --all
             git reset --hard origin/main
 
-            # Ensure Docker installed (only if missing)
+            # Ensure Docker Compose installed
             if ! command -v docker >/dev/null 2>&1; then
               curl -fsSL https://get.docker.com | sh
             fi
@@ -40,12 +36,12 @@ jobs:
               apt update && apt install -y docker-compose-plugin
             fi
 
-            # Write .env.production safely
-            cat > .env.production << 'ENVEOF'
-            ${PROD_ENV_CONTENT}
-            ENVEOF
+            # Create .env.production if missing
+            if [ ! -f .env.production ]; then
+              echo \"${{ secrets.PROD_ENV_FILE }}\" > .env.production
+            fi
 
-            # Deploy Docker
+            # Start Docker Compose
             docker compose down
             docker compose up -d --build
-EOF
+          "
