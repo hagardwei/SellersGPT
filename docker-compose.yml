@@ -2,8 +2,7 @@ version: "3.9"
 
 services:
   app:
-    # image: yourdockerhubusername/next-payload:latest
-    build:
+    build: .
     container_name: next_payload_app
     restart: always
     env_file:
