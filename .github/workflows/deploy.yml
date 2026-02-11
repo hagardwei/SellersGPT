@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to droplet
         run: |
-          ssh -o StrictHostKeyChecking=no root@129.212.239.171 << 'EOF'
+          ssh -o StrictHostKeyChecking=no root@129.212.239.171 << EOF
             mkdir -p /home/ubuntu/app/SellersGPT
             cd /home/ubuntu/app/SellersGPT
 
@@ -33,7 +33,7 @@ jobs:
               curl -fsSL https://get.docker.com | sh
             fi
             if ! docker compose version >/dev/null 2>&1; then
-              apt update && apt install -y docker-compose-plugin
+              sudo apt update && sudo apt install -y docker-compose-plugin
             fi
 
             # Create .env.production if missing
@@ -45,4 +45,3 @@ jobs:
             docker compose down
             docker compose up -d --build
           EOF
-
