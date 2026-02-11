@@ -30,7 +30,7 @@ jobs:
                 echo 'Directory not empty but not a git repo, cleaning...'
                 rm -rf /home/ubuntu/app/SellersGPT/*
               fi
-              git clone https://github.com/<your-username>/<your-repo>.git .
+              git clone https://github.com/hagardwei/SellersGPT.git .
             else
               git fetch --all
               git reset --hard origin/main
