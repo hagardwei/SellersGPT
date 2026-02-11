@@ -24,10 +24,13 @@ jobs:
             mkdir -p /home/ubuntu/app/SellersGPT
             cd /home/ubuntu/app/SellersGPT
 
-            # Pull latest code
-            git fetch --all
-            git reset --hard origin/main
-
+            # If not a git repo yet, clone
+            if [ ! -d .git ]; then
+              git clone https://github.com/hagardwei/SellersGPT.git .
+            else
+              git fetch --all
+              git reset --hard origin/main
+            fi
             # Ensure Docker Compose installed
             if ! command -v docker >/dev/null 2>&1; then
               curl -fsSL https://get.docker.com | sh
