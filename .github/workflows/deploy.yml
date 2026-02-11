@@ -18,19 +18,30 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
-      - name: Deploy to droplet
+      - name: Deploy to Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
-          mkdir -p /home/ubuntu/app/SellersGPT
-          cd /home/ubuntu/app/SellersGPT || exit 1
-          if [ ! -d .git ]; then
-            git clone https://github.com/hagardwei/SellersGPT.git .
-          else
-            git fetch --all
-            git reset --hard origin/main
-          fi
-          # Ensure .env is present (should be managed on droplet)
-          docker-compose down
-          docker-compose up -d --build
-          docker system prune -f
+            mkdir -p /home/ubuntu/app/SellersGPT
+            cd /home/ubuntu/app/SellersGPT || exit 1
+
+            # Clone or update repo
+            if [ ! -d .git ]; then
+              git clone https://github.com/hagardwei/SellersGPT.git .
+            else
+              git fetch --all
+              git reset --hard origin/main
+            fi
+
+            # Ensure .env exists on Droplet
+            if [ ! -f .env ]; then
+              echo 'ERROR: .env file missing'
+              exit 1
+            fi
+
+            # Stop old containers, build and start new ones
+            docker-compose down
+            docker-compose up -d --build
+
+            # Cleanup
+            docker system prune -f
           "
