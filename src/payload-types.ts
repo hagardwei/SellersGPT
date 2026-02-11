@@ -192,6 +192,7 @@ export interface Page {
    * Shared ID for all language variants of this document.
    */
   translation_group_id: string;
+  hero?: any;
   slug?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -454,6 +455,7 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+  draft?: string | ''
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

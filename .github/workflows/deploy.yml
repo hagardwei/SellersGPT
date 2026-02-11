@@ -21,9 +21,16 @@ jobs:
       - name: Deploy to droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
+          mkdir -p /home/ubuntu/app/SellersGPT
           cd /home/ubuntu/app/SellersGPT || exit 1
-          git fetch --all
-          git reset --hard origin/main
+          if [ ! -d .git ]; then
+            git clone https://github.com/hagardwei/SellersGPT.git .
+          else
+            git fetch --all
+            git reset --hard origin/main
+          fi
+          # Ensure .env is present (should be managed on droplet)
           docker-compose down
           docker-compose up -d --build
+          docker system prune -f
           "

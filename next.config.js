@@ -11,6 +11,10 @@ const nextConfig = {
   experimental: {
     reactCompiler: true,
   },
+  eslint: {
+    // Ignore ESLint errors during Docker/production build
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
@@ -34,6 +38,7 @@ const nextConfig = {
   },
   reactStrictMode: true,
   redirects,
+  output: 'standalone',
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

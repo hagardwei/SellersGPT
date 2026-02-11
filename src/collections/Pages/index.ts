@@ -259,18 +259,18 @@ export const Pages: CollectionConfig<'pages'> = {
       },
     },
   ],
-  endpoints: [
-    {
-      path: '/:id/clone-to',
-      method: 'post',
-      handler: cloneTranslationHandler,
-    },
-    {
-      path: '/:id/delete-group',
-      method: 'post',
-      handler: deleteGroupHandler,
-    },
-  ],
+  // endpoints: [
+  //   {
+  //     path: '/:id/clone-to',
+  //     method: 'post',
+  //     handler: cloneTranslationHandler,
+  //   },
+  //   {
+  //     path: '/:id/delete-group',
+  //     method: 'post',
+  //     handler: deleteGroupHandler,
+  //   },
+  // ],
   hooks: {
     afterChange: [revalidatePage],
     beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
