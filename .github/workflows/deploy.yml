@@ -17,6 +17,8 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
+
+      - name: Deploy to droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@129.212.239.171 "
             mkdir -p /home/ubuntu/app/SellersGPT
