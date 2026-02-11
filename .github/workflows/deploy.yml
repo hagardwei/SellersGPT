@@ -13,35 +13,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up SSH
+      - name: Deploy to droplet via SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
-
-      - name: Deploy to droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@129.212.239.171 "
-          mkdir -p /home/ubuntu/app/SellersGPT
-          cd /home/ubuntu/app/SellersGPT
+            mkdir -p /home/ubuntu/app/SellersGPT
+            cd /home/ubuntu/app/SellersGPT
 
-          # Pull latest code
-          git fetch --all
-          git reset --hard origin/main
+            # Pull latest code
+            git fetch --all
+            git reset --hard origin/main
 
-          # Ensure Docker Compose installed
-          if ! command -v docker >/dev/null 2>&1; then
-            curl -fsSL https://get.docker.com | sh
-          fi
-          if ! docker compose version >/dev/null 2>&1; then
-            apt update && apt install -y docker-compose-plugin
-          fi
+            # Ensure Docker Compose installed
+            if ! command -v docker >/dev/null 2>&1; then
+              curl -fsSL https://get.docker.com | sh
+            fi
+            if ! docker compose version >/dev/null 2>&1; then
+              apt update && apt install -y docker-compose-plugin
+            fi
 
-          # Create .env.production if it doesn't exist
-          if [ ! -f .env.production ]; then
-            echo \"${{ secrets.PROD_ENV_FILE }}\" > .env.production
-          fi
+            # Create .env.production if missing
+            if [ ! -f .env.production ]; then
+              echo \"${{ secrets.PROD_ENV_FILE }}\" > .env.production
+            fi
 
-          # Start Docker Compose
-          docker compose down
-          docker compose up -d --build
+            # Start Docker Compose
+            docker compose down
+            docker compose up -d --build
           "
