@@ -20,6 +20,9 @@ jobs:
 
       - name: Deploy to droplet
         run: |
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          export DOCKER_CONFIG=/tmp/empty_docker_config
+          mkdir -p $DOCKER_CONFIG
           ssh -o StrictHostKeyChecking=no root@159.223.55.25 "
           mkdir -p /home/ubuntu/app/SellersGPT
           cd /home/ubuntu/app/SellersGPT
