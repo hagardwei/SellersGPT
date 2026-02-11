@@ -42,8 +42,8 @@ jobs:
 
             # Write .env.production safely
             cat > .env.production << 'ENVEOF'
-${PROD_ENV_CONTENT}
-ENVEOF
+            ${PROD_ENV_CONTENT}
+            ENVEOF
 
             # Deploy Docker
             docker compose down
