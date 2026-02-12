@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to droplet
         run: |
-          ssh -o StrictHostKeyChecking=no root@129.212.239.171 << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DROPLET_USER || 'root' }}@${{ secrets.DROPLET_IP }} << EOF
             mkdir -p /home/ubuntu/app/SellersGPT
             cd /home/ubuntu/app/SellersGPT
 
@@ -44,4 +44,7 @@ jobs:
             # Start Docker Compose
             docker compose down
             docker compose up -d --build
+
+            # Cleanup old images
+            docker image prune -f
           EOF

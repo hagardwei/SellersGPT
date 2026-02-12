@@ -2,13 +2,18 @@ version: "3.9"
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-}
     container_name: next_payload_app
     restart: always
     env_file:
       - .env.production
     expose:
       - "3000"
+    volumes:
+      - payload_media:/app/public/media
 
   nginx:
     image: nginx:alpine
@@ -21,23 +26,29 @@ services:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
       - ./ssl:/etc/nginx/ssl
     entrypoint: /bin/sh
-    command: -c "
-      # Detect droplet public IP dynamically
-      PUBLIC_IP=$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address || curl -s https://ifconfig.me) && \
-      echo \"Using IP: $PUBLIC_IP\" && \
-      export SERVER_NAME=$PUBLIC_IP && \
-      export UPSTREAM_HOST=app && \
-      export UPSTREAM_PORT=3000 && \
-      # Generate dynamic Nginx config
-      envsubst '\$SERVER_NAME \$UPSTREAM_HOST \$UPSTREAM_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && \
-      # Generate self-signed SSL if missing
-      if [ ! -f /etc/nginx/ssl/selfsigned.crt ]; then
-        openssl req -x509 -nodes -days 365 \
-          -newkey rsa:2048 \
-          -keyout /etc/nginx/ssl/selfsigned.key \
-          -out /etc/nginx/ssl/selfsigned.crt \
-          -subj \"/CN=$PUBLIC_IP\"
-      fi && \
-      nginx -g 'daemon off;'"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Detect droplet public IP dynamically
+        PUBLIC_IP=$$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address || curl -s https://ifconfig.me) && \
+        echo "Using IP: $$PUBLIC_IP" && \
+        export SERVER_NAME=$$PUBLIC_IP && \
+        export UPSTREAM_HOST=app && \
+        export UPSTREAM_PORT=3000 && \
+        # Generate dynamic Nginx config
+        envsubst '\$$SERVER_NAME \$$UPSTREAM_HOST \$$UPSTREAM_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && \
+        # Generate self-signed SSL if missing
+        if [ ! -f /etc/nginx/ssl/selfsigned.crt ]; then
+          openssl req -x509 -nodes -days 365 \
+            -newkey rsa:2448 \
+            -keyout /etc/nginx/ssl/selfsigned.key \
+            -out /etc/nginx/ssl/selfsigned.crt \
+            -subj "/CN=$$PUBLIC_IP"
+        fi && \
+        nginx -g 'daemon off;'
     depends_on:
       - app
+
+volumes:
+  payload_media:
