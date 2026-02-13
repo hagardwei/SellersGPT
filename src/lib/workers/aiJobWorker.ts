@@ -1,9 +1,30 @@
 import 'dotenv/config';
-import {Worker, QueueEvents} from 'bullmq';
+import {Worker, QueueEvents , Queue} from 'bullmq';
 import { connection } from '@/lib/redis';
 import { getPayload } from 'payload';
 import configPromise from '@payload-config';
 import { runAIJob } from '@/utilities/ai/orchestrator';
+
+
+
+
+const aiQueue = new Queue('ai-jobs', { connection });
+
+async function registerCron() {
+  await aiQueue.add(
+    'daily-ai-job',
+    { aiJobId: 'AUTO_DAILY' },
+    {
+      repeat: { pattern: '0 6 * * *' }, 
+      removeOnComplete: true,
+    }
+  );
+
+  console.log('[Cron] Daily AI job scheduled.');
+}
+
+registerCron();
+
 
 
 const worker = new Worker('ai-jobs', async (job) => {
@@ -40,7 +61,7 @@ const worker = new Worker('ai-jobs', async (job) => {
     }
 }, {connection, concurrency: 5});
 
-// Queue events for logging & dashboard
+
 const queueEvents = new QueueEvents('ai-jobs', { connection });
 
 queueEvents.on('completed', ({ jobId }) => {

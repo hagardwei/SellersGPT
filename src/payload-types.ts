@@ -76,6 +76,7 @@ export interface Config {
     footer: Footer;
     'ai-jobs': AiJob;
     translations: Translation;
+    'news-sources': NewsSource;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -102,6 +103,7 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
     'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
     translations: TranslationsSelect<false> | TranslationsSelect<true>;
+    'news-sources': NewsSourcesSelect<false> | NewsSourcesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1307,6 +1309,20 @@ export interface Translation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-sources".
+ */
+export interface NewsSource {
+  id: number;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  title?: string | null;
+  content?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1531,6 +1547,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'translations';
         value: number | Translation;
+      } | null)
+    | ({
+        relationTo: 'news-sources';
+        value: number | NewsSource;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2284,6 +2304,19 @@ export interface TranslationsSelect<T extends boolean = true> {
         id?: T;
       };
   source_hash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-sources_select".
+ */
+export interface NewsSourcesSelect<T extends boolean = true> {
+  sourceId?: T;
+  sourceUrl?: T;
+  title?: T;
+  content?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
