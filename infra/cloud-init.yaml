@@ -1,0 +1,5 @@
+#cloud-config
+runcmd:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS ${registry_url}
+  - docker pull ${registry_url}/app:latest
+  - docker run -d -p 3000:3000 ${registry_url}/app:latest

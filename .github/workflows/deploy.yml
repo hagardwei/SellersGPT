@@ -1,4 +1,4 @@
-name: CI/CD Deploy to Droplet
+name: Deploy to DigitalOcean
 
 on:
   push:
@@ -10,41 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Deploy to droplet via SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      # Install doctl
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
-          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
+          token: ${{ secrets.DO_API_TOKEN }}
 
-      - name: Deploy to droplet
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DROPLET_USER || 'root' }}@${{ secrets.DROPLET_IP }} << EOF
-            mkdir -p /home/ubuntu/app/SellersGPT
-            cd /home/ubuntu/app/SellersGPT
+      # Login to DO Registry
+      - name: Login to DO Registry
+        run: doctl registry login
 
-            # Pull latest code
-            git fetch --all
-            git reset --hard origin/main
+      # Build Docker Image
+      - name: Build image
+        run: docker build -t registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/app:latest .
 
-            # Ensure Docker Compose installed
-            if ! command -v docker >/dev/null 2>&1; then
-              curl -fsSL https://get.docker.com | sh
-            fi
-            if ! docker compose version >/dev/null 2>&1; then
-              sudo apt update && sudo apt install -y docker-compose-plugin
-            fi
+      # Push Docker Image
+      - name: Push image
+        run: docker push registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/app:latest
 
-            # Create .env.production if missing
-            if [ ! -f .env.production ]; then
-              echo "${{ secrets.PROD_ENV_FILE }}" > .env.production
-            fi
+      # Setup Terraform
+      - uses: hashicorp/setup-terraform@v2
 
-            # Start Docker Compose
-            docker compose down
-            docker compose up -d --build
+      - name: Terraform Init
+        run: terraform init
+        working-directory: infra
 
-            # Cleanup old images
-            docker image prune -f
-          EOF
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: infra
+        env:
+          TF_VAR_DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+          TF_VAR_ssh_fingerprint: ${{ secrets.DO_SSH_FINGERPRINT }}
