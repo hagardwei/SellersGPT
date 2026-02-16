@@ -11,15 +11,18 @@ export const getMeUser = async (args?: {
   token: string
   user: User
 }> => {
+  console.log("nullUserRedirect", args?.nullUserRedirect)
   const { nullUserRedirect, validUserRedirect } = args || {}
   const cookieStore = await cookies()
   const token = cookieStore.get('payload-token')?.value
-
+  console.log(token, "++++++++++++")
   const meUserReq = await fetch(`${getClientSideURL()}/api/users/me`, {
     headers: {
       Authorization: `JWT ${token}`,
     },
   })
+
+  console.log(meUserReq)
 
   const {
     user,

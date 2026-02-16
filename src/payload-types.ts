@@ -76,7 +76,7 @@ export interface Config {
     footer: Footer;
     'ai-jobs': AiJob;
     translations: Translation;
-    'news-sources': NewsSource;
+    news_raw: NewsRaw;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -103,7 +103,7 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
     'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
     translations: TranslationsSelect<false> | TranslationsSelect<true>;
-    'news-sources': NewsSourcesSelect<false> | NewsSourcesSelect<true>;
+    news_raw: NewsRawSelect<false> | NewsRawSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1309,14 +1309,16 @@ export interface Translation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "news-sources".
+ * via the `definition` "news_raw".
  */
-export interface NewsSource {
+export interface NewsRaw {
   id: number;
-  sourceId?: string | null;
-  sourceUrl?: string | null;
+  source?: string | null;
+  externalId?: string | null;
   title?: string | null;
+  description?: string | null;
   content?: string | null;
+  url?: string | null;
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1549,8 +1551,8 @@ export interface PayloadLockedDocument {
         value: number | Translation;
       } | null)
     | ({
-        relationTo: 'news-sources';
-        value: number | NewsSource;
+        relationTo: 'news_raw';
+        value: number | NewsRaw;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2309,13 +2311,15 @@ export interface TranslationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "news-sources_select".
+ * via the `definition` "news_raw_select".
  */
-export interface NewsSourcesSelect<T extends boolean = true> {
-  sourceId?: T;
-  sourceUrl?: T;
+export interface NewsRawSelect<T extends boolean = true> {
+  source?: T;
+  externalId?: T;
   title?: T;
+  description?: T;
   content?: T;
+  url?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
