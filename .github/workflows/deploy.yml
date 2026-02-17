@@ -1,81 +1,50 @@
-name: Deploy Next.js site to Pages
+name: Deploy production
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch:
+    branches:
+      - main
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+env:
+  GITHUB_SHA: ${{ github.sha }}
+  DO_REGISTRY: ${{ secrets.DO_REGISTRY_NEW }}
+  DEPLOYMENT: boxxer-client-testing
+  IMAGE: sellergpt
+  APP_NAME: ubuntu-s-1vcpu-1gb-sfo2-01   # Name of your DigitalOcean App or Droplet
+  DO_REGION: sfo2               # Change to your DigitalOcean region
 
 jobs:
-  build:
+  build-and-deploy:
+    name: Build, push, and deploy to DigitalOcean
     runs-on: ubuntu-latest
+
     steps:
-      # 1️⃣ Checkout the code
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # 2️⃣ Setup Node.js
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Checkout main
+        uses: actions/checkout@v3
         with:
-          node-version: "20"
-          cache: "npm"
+          ref: main
 
-      # 3️⃣ Set DATABASE_URL from GitHub Secrets
-      - name: Set DATABASE_URL
-        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build --memory=8000M -t $DO_REGISTRY/$IMAGE:$GITHUB_SHA -t $DO_REGISTRY/$IMAGE:latest -f Dockerfile .
 
-      # 4️⃣ Setup Pages for Next.js
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      # Install doctl
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
-          static_site_generator: next
+          token: ${{ secrets.DO_API_TOKEN }}
 
-      # 5️⃣ Restore Next.js cache
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('SellersGPT/package-lock.json', 'SellersGPT/**/*.js', 'SellersGPT/**/*.ts', 'SellersGPT/**/*.tsx') }}
-          restore-keys: ${{ runner.os }}-nextjs-
+      # Push the Docker image to DO Registry
+      - name: Push Docker image to DO Registry
+        run: |
+          doctl registry login --expiry-seconds 1000
+          docker push $DO_REGISTRY/$IMAGE:$GITHUB_SHA
+          docker push $DO_REGISTRY/$IMAGE:latest
 
-      # 6️⃣ Install dependencies using npm
-      - name: Install dependencies
-        run: npm ci
-        working-directory: SellersGPT
-
-      # 7️⃣ Build the Next.js site
-      - name: Build with Next.js
-        run: npm run build
-        working-directory: SellersGPT
-
-      # 8️⃣ Export static site (for GitHub Pages)
-      - name: Export Next.js site
-        run: npm run export
-        working-directory: SellersGPT
-
-      # 9️⃣ Upload artifact for deployment
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: SellersGPT/out
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      # 1️⃣ Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # Deploy to DigitalOcean App Platform (Droplet)
+      - name: Deploy to DigitalOcean
+        run: |
+          echo "Triggering deployment for $sellerapp"
+          doctl apps update $sellerapp \
+            --spec <(doctl apps spec get $APP_NAME | jq '.services[0].image.digest="'$DO_REGISTRY/$IMAGE:$GITHUB_SHA'"') 
