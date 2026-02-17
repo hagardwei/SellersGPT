@@ -1,45 +1,29 @@
-name: Deploy to DigitalOcean
+steps:
+  # 1. Checkout the code from GitHub
+  - name: Checkout code
+    uses: actions/checkout@v2
 
-on:
-  push:
-    branches:
-      - main
+  # 2. Set up SSH to access the droplet
+  - name: Set up SSH
+    uses: webfactory/ssh-agent@v0.5.3
+    with:
+      ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  # 3. Set DATABASE_URL from GitHub secrets
+  - name: Set Environment Variable
+    run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
-    steps:
-      - uses: actions/checkout@v3
+  # 4. SSH into the droplet and pull latest code + restart app
+  - name: Deploy to Droplet
+    run: |
+      ssh -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF'
+        cd /root/sellerapp/SellersGPT
+        
+        git pull origin main
 
-      # Install doctl
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DO_API_TOKEN }}
+        # Export the DATABASE_URL inside the droplet session
+        export DATABASE_URL="${{ secrets.DATABASE_URL }}"
 
-      # Login to DO Registry
-      - name: Login to DO Registry
-        run: doctl registry login
-
-      # Build Docker Image
-      - name: Build image
-        run: docker build -t registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/app:latest .
-
-      # Push Docker Image
-      - name: Push image
-        run: docker push registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/app:latest
-
-      # Setup Terraform
-      - uses: hashicorp/setup-terraform@v2
-
-      - name: Terraform Init
-        run: terraform init
-        working-directory: infra
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-        working-directory: infra
-        env:
-          TF_VAR_DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
-          TF_VAR_ssh_fingerprint: ${{ secrets.DO_SSH_FINGERPRINT }}
+        # Restart your app (systemd example)
+        sudo systemctl restart your-app-service
+      EOF
