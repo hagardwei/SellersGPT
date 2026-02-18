@@ -3,16 +3,16 @@ name: Deploy to DigitalOcean Droplet
 on:
   push:
     branches:
-      - main  # Trigger the action on pushes to the 'main' branch
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # The runner environment
-    timeout-minutes: 60  # Allow the job to run for up to 60 minutes
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3  # Checkout the repository code
+      uses: actions/checkout@v3
 
     - name: Set up SSH keys
       run: |
@@ -22,10 +22,16 @@ jobs:
         ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-    
+
     - name: Set up SSL certificate
       run: |
-        echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt  # Save the SSL certificate file
+        # Save the SSL certificate from secrets to a file
+        echo "$POSTGRES_SSL_CERT" > ./postgres_cert.crt  # Save to current directory
+
+    - name: Debug SSL certificate setup
+      run: |
+        # Print out the certificate to confirm the contents (for debugging)
+        cat ./postgres_cert.crt
 
     - name: Set up environment variables
       run: |
@@ -33,7 +39,7 @@ jobs:
         echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV
 
         # Add the PostgreSQL database URL to the environment with SSL options
-        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=require&sslrootcert=./postgres_cert.crt" >> $GITHUB_ENV
+        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=verify-ca&sslrootcert=./postgres_cert.crt" >> $GITHUB_ENV
       env:
         PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -65,11 +71,11 @@ jobs:
         ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=120 root@178.128.64.173 << 'EOF'
           set -e
           cd /root/sellerapp/SellersGPT || exit 1
-          git reset --hard origin/main || exit 1  # Ensures the latest main branch code is pulled
+          git reset --hard origin/main || exit 1
           npm install --production || exit 1
           npm run build || exit 1
-          npm run start || exit 1  # Start the app (use 'npm run start:prod' if you have a production start script)
+          npm run start || exit 1
         EOF
 
     - name: Clean up SSH keys
-      run: rm -rf ~/.ssh  # Clean up SSH keys after the deployment
+      run: rm -rf ~/.ssh
