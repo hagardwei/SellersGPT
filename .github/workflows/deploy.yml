@@ -1,3 +1,10 @@
+name: Deploy to DigitalOcean Droplet
+
+on:
+  push:
+    branches:
+      - main  # Trigger the action on pushes to the 'main' branch
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
