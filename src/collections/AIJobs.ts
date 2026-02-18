@@ -26,6 +26,8 @@ export const AIJobs: CollectionConfig = {
                 { label: 'Generate Page', value: 'GENERATE_PAGE' },
                 { label: 'Regenerate Page', value: 'REGENERATE_PAGE' },
                 { label: 'Translate Document', value: 'TRANSLATE_DOCUMENT' },
+                { label: 'Bulk Keyword Generation', value: 'BULK_KEYWORD_GENERATION' },
+                { label: 'Generate Keyword Article', value: 'GENERATE_KEYWORD_ARTICLE' },
             ],
         },
         {
@@ -144,6 +146,18 @@ export const AIJobs: CollectionConfig = {
                 // { label: 'Русский', value: 'ru' },
                 // { label: 'Nederlands', value: 'nl' },
             ]
+        },
+        {
+            name: 'total_keywords',
+            type: 'number',
+        },
+        {
+            name: 'processed_keywords',
+            type: 'number'
+        },
+        {
+            name: 'completion_percentage',
+            type: 'number'
         },
         {
             name: 'completed_at',

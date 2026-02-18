@@ -76,6 +76,7 @@ export interface Config {
     footer: Footer;
     'ai-jobs': AiJob;
     translations: Translation;
+    'bulk-keyword-uploads': BulkKeywordUpload;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -102,6 +103,7 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
     'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
     translations: TranslationsSelect<false> | TranslationsSelect<true>;
+    'bulk-keyword-uploads': BulkKeywordUploadsSelect<false> | BulkKeywordUploadsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1192,7 +1194,13 @@ export interface Footer {
  */
 export interface AiJob {
   id: number;
-  type: 'GENERATE_WEBSITE' | 'GENERATE_PAGE' | 'REGENERATE_PAGE' | 'TRANSLATE_DOCUMENT';
+  type:
+    | 'GENERATE_WEBSITE'
+    | 'GENERATE_PAGE'
+    | 'REGENERATE_PAGE'
+    | 'TRANSLATE_DOCUMENT'
+    | 'BULK_KEYWORD_GENERATION'
+    | 'GENERATE_KEYWORD_ARTICLE';
   status: 'pending' | 'running' | 'completed' | 'failed';
   /**
    * Current execution step (e.g. "INITIALIZATION", "PLANNING")
@@ -1273,6 +1281,9 @@ export interface AiJob {
    */
   parent_job?: (number | null) | AiJob;
   target_language?: ('en' | 'es') | null;
+  total_keywords?: number | null;
+  processed_keywords?: number | null;
+  completion_percentage?: number | null;
   completed_at?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1302,6 +1313,21 @@ export interface Translation {
       }[]
     | null;
   source_hash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bulk-keyword-uploads".
+ */
+export interface BulkKeywordUpload {
+  id: number;
+  file: number | Media;
+  fileName?: string | null;
+  status?: ('pending' | 'processing' | 'completed' | 'failed') | null;
+  totalKeywords?: number | null;
+  processedKeywords?: number | null;
+  parentJobId?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1531,6 +1557,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'translations';
         value: number | Translation;
+      } | null)
+    | ({
+        relationTo: 'bulk-keyword-uploads';
+        value: number | BulkKeywordUpload;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2262,6 +2292,9 @@ export interface AiJobsSelect<T extends boolean = true> {
   retry_reason?: T;
   parent_job?: T;
   target_language?: T;
+  total_keywords?: T;
+  processed_keywords?: T;
+  completion_percentage?: T;
   completed_at?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2284,6 +2317,20 @@ export interface TranslationsSelect<T extends boolean = true> {
         id?: T;
       };
   source_hash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bulk-keyword-uploads_select".
+ */
+export interface BulkKeywordUploadsSelect<T extends boolean = true> {
+  file?: T;
+  fileName?: T;
+  status?: T;
+  totalKeywords?: T;
+  processedKeywords?: T;
+  parentJobId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
