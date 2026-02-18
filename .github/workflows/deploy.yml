@@ -64,15 +64,11 @@ jobs:
 
     - name: Run database migrations
       run: |
-        # Add your migration command here based on the migration tool used in your project
-        npm run migrate || exit 1
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        npm run migrate || exit 1  # Run Sequelize migrations
 
     - name: Build the application
       run: |
         npm run build || exit 1  # Run the build command
-      timeout-minutes: 20
 
     - name: Deploy to Droplet
       run: |
