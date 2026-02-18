@@ -22,6 +22,10 @@ jobs:
         ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    - name: Set up environment variables
+      run: |
+        echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV  # Add secret key to the environment
 
     - name: Install Node.js and remove old versions
       run: |
