@@ -34,6 +34,15 @@ jobs:
           git fetch origin || exit 1
           git reset --hard origin/main || exit 1
 
+          if ! command -v node &> /dev/null
+          then
+            echo "Node.js not found, installing..."
+            curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+          else
+            echo "Node.js is already installed"
+          fi
+
           # Install dependencies and build the app
           npm install --production || exit 1  # Use --production flag for production builds
           npm run build || exit 1
