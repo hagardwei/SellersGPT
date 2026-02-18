@@ -21,6 +21,18 @@ const MEDIA_KEYS = new Set([
   'file',
 ]);
 
+const TRANSLATABLE_KEYS = new Set([
+  'title',
+  'subTitle',
+  'heading',
+  'label',
+  'text',
+  'description',
+  'introContent',
+  'buttonText',
+  'ctaText',
+]);
+
 
 /**
  * Recursively extracts text fields from blocks.
@@ -35,14 +47,15 @@ function extractTextPaths(block: any, path: string[] = [], result: Record<string
      }
 
     // 🚫 Never translate structural keys
-    if (['blockType', 'id', '_uuid', 'slug', 'status', 'variant'].includes(key)) {
-      continue;
-    }
+    // if (NON_TRANSLATABLE_KEYS.has(key)) {
+    //   continue;
+    // }
 
     const currentPath = [...path, key];
 
     // ✅ Translate plain content strings only
-    if (typeof value === 'string') {
+   // ✅ Only translate whitelisted content keys
+    if (typeof value === 'string' && TRANSLATABLE_KEYS.has(key)) {
       result[currentPath.join('.')] = value;
       continue;
     }
