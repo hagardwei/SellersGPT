@@ -34,14 +34,17 @@ jobs:
           git fetch origin || exit 1
           git reset --hard origin/main || exit 1
 
-          if ! command -v node &> /dev/null
+          if command -v node &> /dev/null
           then
-            echo "Node.js not found, installing..."
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs
+            echo "Node.js is already installed, removing old versions..."
+            sudo apt-get remove -y nodejs npm
           else
-            echo "Node.js is already installed"
+            echo "Node.js is not installed."
           fi
+
+          echo "Installing Node.js 20.x..."
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
 
           # Install dependencies and build the app
           npm install --production || exit 1  # Use --production flag for production builds
