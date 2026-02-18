@@ -22,49 +22,14 @@ jobs:
 
     - name: Deploy to Droplet
       run: |
-        # SSH into your droplet and deploy the latest changes from Git
-        ssh -T -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF
-          # Step 1: Set the project directory path
-          cd /root/sellerapp/SellersGPT  # <-- Replace with your droplet's project directory path
-          
-          # Step 2: Pull the latest changes from the 'main' branch
+        ssh -T -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF'
+          cd /root/sellerapp/SellersGPT  # <-- Replace with your droplet's project directory
           git fetch origin
           git checkout main
           git pull origin main
-          
-          # Step 3: Install Node.js (if not already installed on droplet)
-          if ! command -v node &> /dev/null
-          then
-            echo "Node.js not found, installing..."
-            curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-          else
-            echo "Node.js is already installed"
-          fi
-          
-          # Step 4: Install project dependencies
-          npm install  # Or use yarn if you use yarn: yarn install
-          
-          # Step 5: Run database migrations (PostgreSQL)
-          # Example for Sequelize:
-          # If you are using Sequelize for migrations:
-          # npx sequelize-cli db:migrate
-          
-          # Or if using TypeORM (Node.js ORM for PostgreSQL):
-          # npx typeorm migration:run
-          
-          # If using plain SQL for migrations, ensure to run your SQL scripts here:
-          # psql -U postgres_user -d your_database -a -f /path/to/your/migration.sql
-
-          # Step 6: Build and start Next.js application
-          npm run build  # Build the Next.js app for production
-          npm run start  # Start the Next.js app (or use PM2 for managing it)
-
-          # Step 7: Restart services (if applicable)
-          # If you are using Nginx and PM2, restart these services
-          sudo systemctl restart nginx
-          pm2 restart all  # Restart all PM2-managed services (if using PM2 for process management)
-
+          npm install
+          npm run build
+          npm run start
         EOF
 
     - name: Clean up SSH keys
