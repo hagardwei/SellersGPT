@@ -15,17 +15,16 @@ jobs:
 
     - name: Set up SSH keys
       run: |
-        # Create SSH directory and configure the private key for authentication
         mkdir -p ~/.ssh
-        echo "$DROPLET_PRIVATE_KEY_180226" > ~/.ssh/id_rsa  # Set your private key from GitHub secrets
-        chmod 600 ~/.ssh/id_rsa  # Correct permissions for the SSH private key
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa  # Remove carriage returns that could cause issues
+        chmod 600 ~/.ssh/id_rsa  # Set correct permissions on the private key
         # Add the droplet's host to the known hosts to avoid SSH verification issues
         ssh-keyscan -t rsa 178.128.64.173 >> ~/.ssh/known_hosts  # Replace with your droplet's IP address
 
     - name: Deploy to Droplet
       run: |
         # SSH into your droplet and deploy the latest changes from Git
-        ssh -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF'
+        ssh -T -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF
           # Step 1: Set the project directory path
           cd /root/sellerapp/SellersGPT  # <-- Replace with your droplet's project directory path
           
