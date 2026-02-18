@@ -15,11 +15,10 @@ jobs:
 
     - name: Set up SSH keys
       run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa  # Remove carriage returns that could cause issues
-        chmod 600 ~/.ssh/id_rsa  # Set correct permissions on the private key
-        # Add the droplet's host to the known hosts to avoid SSH verification issues
-        ssh-keyscan -t rsa 178.128.64.173 >> ~/.ssh/known_hosts  # Replace with your droplet's IP address
+          mkdir -p ~/.ssh
+          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
 
     - name: Deploy to Droplet
       run: |
