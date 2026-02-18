@@ -16,9 +16,11 @@ jobs:
     - name: Set up SSH keys
       run: |
         mkdir -p ~/.ssh
-        printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519  # Add SSH private key
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts  # Add droplet to known hosts
+        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy to Droplet
       run: |
