@@ -29,7 +29,7 @@ jobs:
         echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV
 
         # Add the PostgreSQL database URL to the environment
-        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=require" >> $GITHUB_ENV
       env:
         PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
