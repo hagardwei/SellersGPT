@@ -3,16 +3,16 @@ name: Deploy to DigitalOcean Droplet
 on:
   push:
     branches:
-      - main
+      - main  # Trigger the action on pushes to the 'main' branch
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # The runner environment
     timeout-minutes: 60  # Allow the job to run for up to 60 minutes
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Checkout the repository code
 
     - name: Set up SSH keys
       run: |
@@ -22,10 +22,17 @@ jobs:
         ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-    
+
     - name: Set up environment variables
       run: |
-        echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV  # Add secret key to the environment
+        # Add the Payload secret to the environment
+        echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV
+
+        # Add the PostgreSQL database URL to the environment
+        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+      env:
+        PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     - name: Install Node.js and remove old versions
       run: |
@@ -54,10 +61,10 @@ jobs:
         ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=120 root@178.128.64.173 << 'EOF'
           set -e
           cd /root/sellerapp/SellersGPT || exit 1
-          git reset --hard origin/main || exit 1
+          git reset --hard origin/main || exit 1  # Ensures the latest main branch code is pulled
           npm install --production || exit 1
           npm run build || exit 1
-          npm run start || exit 1
+          npm run start || exit 1  # Start the app (use 'npm run start:prod' if you have a production start script)
         EOF
 
     - name: Clean up SSH keys
