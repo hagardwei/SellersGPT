@@ -30,10 +30,10 @@ jobs:
           # Navigate to the correct project directory
           cd /root/sellerapp/SellersGPT || exit 1  # <-- Replace with your droplet's project directory
           
-          # Fetch the latest code and ensure we're on the main branch
+          # Fetch the latest code and merge changes
           git fetch origin || exit 1
           git checkout main || exit 1
-          git pull origin main || exit 1
+          git pull origin main --no-rebase || exit 1
 
           # Install dependencies and build the app
           npm install --production || exit 1  # Use --production flag for production builds
