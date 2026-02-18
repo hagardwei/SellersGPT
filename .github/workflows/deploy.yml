@@ -23,22 +23,12 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Set up SSL certificate
-      run: |
-        # Save the SSL certificate from secrets to a file
-        echo "$POSTGRES_SSL_CERT" > ./postgres_cert.crt  # Save to current directory
-
-    - name: Debug SSL certificate setup
-      run: |
-        # Print out the certificate to confirm the contents (for debugging)
-        cat ./postgres_cert.crt
-
     - name: Set up environment variables
       run: |
         # Add the Payload secret to the environment
         echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV
 
-        # Add the PostgreSQL database URL to the environment with SSL options
+        # Add the PostgreSQL database URL with SSL disabled
         echo "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=disable" >> $GITHUB_ENV
       env:
         PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
