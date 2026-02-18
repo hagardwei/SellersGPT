@@ -62,6 +62,10 @@ jobs:
       run: |
         npm install || exit 1  # Install all dependencies
 
+    - name: Debug: List all npm scripts
+      run: |
+        npm run || exit 1  # List all available npm scripts
+
     - name: Run database migrations
       run: |
         npm run migrate || exit 1  # Run Sequelize migrations
