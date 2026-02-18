@@ -7,21 +7,38 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # The runner environment
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Checkout the repository code (v3)
 
-    - name: Set up SSH
+    - name: Set up SSH keys
       run: |
         mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+        printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519  # Add SSH private key
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts  # Add droplet to known hosts
 
-    - name: Test SSH Connection
+    - name: Deploy to Droplet
       run: |
-        ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@178.128.64.173 "echo 'SSH Connection Successful!'"
+        ssh -T -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF'
+          set -e  # Stop the script if any command fails
+          
+          # Navigate to the correct project directory
+          cd /root/sellerapp/SellersGPT || exit 1  # <-- Replace with your droplet's project directory
+          
+          # Fetch the latest code and ensure we're on the main branch
+          git fetch origin || exit 1
+          git checkout main || exit 1
+          git pull origin main || exit 1
+
+          # Install dependencies and build the app
+          npm install --production || exit 1  # Use --production flag for production builds
+          npm run build || exit 1
+          npm run start || exit 1  # Or use 'npm run start:prod' if you have a production-specific start script
+
+        EOF
+
+    - name: Clean up SSH keys
+      run: rm -rf ~/.ssh  # Clean up SSH keys after the deployment
