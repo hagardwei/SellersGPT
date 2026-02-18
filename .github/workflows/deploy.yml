@@ -62,9 +62,17 @@ jobs:
       run: |
         npm install || exit 1  # Install all dependencies
 
+    - name: Run database migrations
+      run: |
+        # Add your migration command here based on the migration tool used in your project
+        npm run migrate || exit 1
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     - name: Build the application
       run: |
         npm run build || exit 1  # Run the build command
+      timeout-minutes: 20
 
     - name: Deploy to Droplet
       run: |
