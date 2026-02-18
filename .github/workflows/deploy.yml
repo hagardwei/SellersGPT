@@ -1,36 +1,20 @@
-name: Deploy to DigitalOcean Droplet
-
-on:
-  push:
-    branches:
-      - main  # Trigger the action on pushes to the 'main' branch
-
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # The runner environment
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2  # Checkout the repository code
+      uses: actions/checkout@v3
 
-    - name: Set up SSH keys
+    - name: Set up SSH
       run: |
-          mkdir -p ~/.ssh
-          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy to Droplet
+    - name: Test SSH Connection
       run: |
-        ssh -T -o StrictHostKeyChecking=no root@178.128.64.173 << 'EOF'
-          cd /root/sellerapp/SellersGPT  # <-- Replace with your droplet's project directory
-          git fetch origin
-          git checkout main
-          git pull origin main
-          npm install
-          npm run build
-          npm run start
-        EOF
-
-    - name: Clean up SSH keys
-      run: rm -rf ~/.ssh  # Clean up SSH keys after the deployment
+        ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@178.128.64.173 "echo 'SSH Connection Successful!'"
