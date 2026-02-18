@@ -9,7 +9,7 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    reactCompiler: false,
+    reactCompiler: true,
   },
   eslint: {
     // Ignore ESLint errors during Docker/production build
@@ -39,22 +39,6 @@ const nextConfig = {
   reactStrictMode: true,
   redirects,
   output: 'standalone',
-
-  // Add custom environment variables here
-  env: {
-    PGSSLVERIFY: 'false',  // Disable SSL verification for Postgres
-  },
-
-  // Ensure database URL has sslmode=disable (you can handle this in the deploy environment too)
-  async redirects() {
-    return [
-      {
-        source: '/old-page',
-        destination: '/new-page',
-        permanent: true,
-      },
-    ]
-  },
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })
