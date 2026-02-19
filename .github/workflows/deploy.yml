@@ -6,85 +6,88 @@ on:
       - main
 
 jobs:
-  deploy:
+  test-db:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
 
-    - name: Set up SSH keys
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Set up SSH keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Upload PostgreSQL certificate to Droplet
-      run: |
-        echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt
+      - name: Upload PostgreSQL certificate to Droplet
+        run: |
+          echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt
 
-    - name: Deploy to Droplet
-      run: |
-        ssh -i ~/.ssh/id_ed25519 -T -o StrictHostKeyChecking=no \
-          -o ServerAliveInterval=60 -o ServerAliveCountMax=120 root@178.128.64.173 << 'EOF'
-          set -e
+      - name: Test PostgreSQL Connection on Droplet
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -T -o StrictHostKeyChecking=no root@178.128.64.173 << EOF
+            set -e
+            echo "Testing PostgreSQL connection..."
 
-          echo "Navigating to project directory..."
-          cd /root/sellerapp/SellersGPT || exit 1
+            # Path to SSL certificate on droplet
+            SSL_CERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
 
-          echo "Fetching latest code..."
-          git fetch origin
-          git reset --hard origin/main
+            # Install psql if missing
+            if ! command -v psql >/dev/null; then
+              apt-get update
+              apt-get install -y postgresql-client
+            fi
 
-          echo "Installing Node.js 20.x if needed..."
-          if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
-            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-            apt-get install -y nodejs
+            # Test connection using environment variables
+            export PGSSLMODE=require
+            export PGSSLCERT="\$SSL_CERT"
+            export PGUSER="${DATABASE_USER}"
+            export PGPASSWORD="${DATABASE_PASSWORD}"
+            export PGHOST="${DB_HOST}"
+            export PGPORT="${DB_PORT}"
+            export PGDATABASE="${DATABASE_NAME}"
+
+            psql -c '\conninfo'
+            echo "Database connection successful!"
+          EOF
+        env:
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+      - name: Install Node.js and remove old versions
+        run: |
+          if command -v node &> /dev/null
+          then
+            echo "Node.js is already installed, removing old versions..."
+            sudo apt-get remove -y nodejs npm
+          else
+            echo "Node.js is not installed."
           fi
-          node -v
+          echo "Installing Node.js 20.x..."
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
 
-          echo "Installing dependencies..."
-          npm install
+      - name: Install dependencies
+        run: |
+          npm install || exit 1
 
-          echo "Setting up environment variables for DB and secrets..."
-          SSL_CERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
-          export PGSSLMODE=require
-          export PGSSLCERT="\$SSL_CERT"
-          export PGUSER="${DATABASE_USER}"
-          export PGPASSWORD="${DATABASE_PASSWORD}"
-          export PGHOST="${DB_HOST}"
-          export PGPORT="${DB_PORT}"
-          export PGDATABASE="${DATABASE_NAME}"
-          export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
+      - name: Build the application
+        run: |
+          npm run build || exit 1
+        timeout-minutes: 20
 
-          echo "Testing database connection..."
-          if ! command -v psql >/dev/null; then
-            apt-get update
-            apt-get install -y postgresql-client
-          fi
-          psql -c '\conninfo'
-          echo "Database connection successful!"
+      - name: Deploy to Droplet
+        run: |
+          ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=120 root@178.128.64.173 << 'EOF'
+            set -e
+            cd /root/sellerapp/SellersGPT || exit 1
+            git reset --hard origin/main || exit 1
+            npm install --production || exit 1
+            npm run build || exit 1
+            npm run start || exit 1
+          EOF
 
-          echo "Building Next.js application..."
-          export NODE_OPTIONS="--max-old-space-size=1024"
-          npm run build
-
-          echo "Restarting application via PM2..."
-          pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
-
-          echo "Deployment complete."
-        EOF
-      env:
-        DATABASE_USER: ${{ secrets.DATABASE_USER }}
-        DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_PORT: ${{ secrets.DB_PORT }}
-        DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-        PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
-
-    - name: Clean up SSH keys
-      run: rm -rf ~/.ssh
+      - name: Clean up SSH keys
+        run: rm -rf ~/.ssh
