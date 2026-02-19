@@ -51,7 +51,39 @@ jobs:
         run: |
           npm install || exit 1
 
-      - name: Build the application
+      - name: Deploy to Droplet
         run: |
-          npm run build || exit 1
-        timeout-minutes: 20
+          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << 'EOF'
+            set -e
+            cd /root/sellerapp/SellersGPT
+
+            echo "Installing Node.js if needed..."
+            if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
+              curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+              apt-get install -y nodejs
+            fi
+
+            echo "Installing dependencies..."
+            npm install
+
+            echo "Setting environment for DB..."
+            export PGSSLMODE=require
+            export PGSSLCERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
+            export PGUSER="${DATABASE_USER}"
+            export PGPASSWORD="${DATABASE_PASSWORD}"
+            export PGHOST="${DB_HOST}"
+            export PGPORT="${DB_PORT}"
+            export PGDATABASE="${DATABASE_NAME}"
+
+            echo "Building Next.js application..."
+            npm run build
+
+            echo "Restarting application..."
+            pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
+          EOF
+        env:
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
