@@ -19,14 +19,22 @@ jobs:
         mkdir -p ~/.ssh
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+        ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        DROPLET_IP: ${{ secrets.DROPLET_IP }}
 
-    - name: Deploy to Droplet (Build happens on server)
+    - name: Deploy to Droplet
       run: |
-        ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=120 root@178.128.64.173 << 'EOF'
+        ssh -T -o StrictHostKeyChecking=no root@$DROPLET_IP << 'EOF'
           set -e
+
+          echo "Ensuring Node.js v20+ is installed..."
+          if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            apt-get install -y nodejs
+          fi
+          node -v
 
           echo "Navigating to project directory..."
           cd /root/sellerapp/SellersGPT
@@ -35,18 +43,27 @@ jobs:
           git fetch origin
           git reset --hard origin/main
 
-          echo "Installing dependencies..."
-          npm install --production
+          echo "Ensuring environment variables..."
+          # Make sure your .env exists and contains DATABASE_URL, NEXTAUTH_SECRET, etc.
+          if [ ! -f .env ]; then
+            echo "ERROR: .env file missing. Deployment cannot continue."
+            exit 1
+          fi
 
-          echo "Building application..."
+          echo "Installing dependencies (including devDependencies for build)..."
+          npm install
+
+          echo "Building Next.js application..."
+          export NODE_OPTIONS="--max-old-space-size=1024"
           npm run build
 
-          echo "Restarting application..."
-          # If using PM2
+          echo "Restarting application via PM2..."
           pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
 
           echo "Deployment complete."
         EOF
+      env:
+        DROPLET_IP: ${{ secrets.DROPLET_IP }}
 
     - name: Clean up SSH keys
       run: rm -rf ~/.ssh
