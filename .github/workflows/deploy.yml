@@ -64,3 +64,16 @@ jobs:
         env:
           PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      
+      - name: Install Node.js and remove old versions
+        run: |
+          if command -v node &> /dev/null
+          then
+            echo "Node.js is already installed, removing old versions..."
+            sudo apt-get remove -y nodejs npm
+          else
+            echo "Node.js is not installed."
+          fi
+          echo "Installing Node.js 20.x..."
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
