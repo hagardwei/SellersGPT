@@ -31,12 +31,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y postgresql-client
-        PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h 142.93.89.248 -U ${{ secrets.DATABASE_USER }} -d ${{ secrets.DATABASE_NAME }} -p 25060 -c 'SELECT 1;' || exit 1
+        PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h 178.128.64.173 -U ${{ secrets.DATABASE_USER }} -d ${{ secrets.DATABASE_NAME }} -p 25060 -c 'SELECT 1;' || exit 1
       env:
         DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         DATABASE_USER: ${{ secrets.DATABASE_USER }}
         DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-
 
     - name: Set up environment variables
       run: |
