@@ -6,10 +6,11 @@ on:
       - main
 
 jobs:
-  test-db:
+  deploy:
     runs-on: ubuntu-latest
-    steps:
+    timeout-minutes: 60
 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -26,47 +27,22 @@ jobs:
         run: |
           echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt
 
-      - name: Set up environment variables
-        run: |
-          echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=require&sslrootcert=./postgres_cert.crt" >> $GITHUB_ENV
-        env:
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Install Node.js and remove old versions
-        run: |
-          if command -v node &> /dev/null
-          then
-            echo "Node.js is already installed, removing old versions..."
-            sudo apt-get remove -y nodejs npm
-          else
-            echo "Node.js is not installed."
-          fi
-          echo "Installing Node.js 20.x..."
-          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-
-      - name: Install dependencies
-        run: |
-          npm install || exit 1
-
       - name: Deploy to Droplet
         run: |
           ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << 'EOF'
             set -e
             cd /root/sellerapp/SellersGPT
 
-            echo "Installing Node.js if needed..."
+            # Install Node.js 20.x if missing or old
             if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
 
-            echo "Installing dependencies..."
+            echo "Installing project dependencies..."
             npm install
 
-            echo "Setting environment for DB..."
+            echo "Setting environment variables for database..."
             export PGSSLMODE=require
             export PGSSLCERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
             export PGUSER="${DATABASE_USER}"
@@ -74,12 +50,22 @@ jobs:
             export PGHOST="${DB_HOST}"
             export PGPORT="${DB_PORT}"
             export PGDATABASE="${DATABASE_NAME}"
+            export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
+
+            echo "Testing PostgreSQL connection..."
+            if ! command -v psql >/dev/null; then
+              apt-get update
+              apt-get install -y postgresql-client
+            fi
+            psql -c '\conninfo'
 
             echo "Building Next.js application..."
             npm run build
 
-            echo "Restarting application..."
+            echo "Restarting application with PM2..."
             pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
+
+            echo "Deployment complete!"
           EOF
         env:
           DATABASE_USER: ${{ secrets.DATABASE_USER }}
@@ -87,3 +73,7 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+
+      - name: Clean up SSH keys
+        run: rm -rf ~/.ssh
