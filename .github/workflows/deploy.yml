@@ -25,20 +25,21 @@ jobs:
 
     - name: Set up SSL certificate
       run: |
-        # Save the SSL certificate from secrets to a file
-        echo "$POSTGRES_SSL_CERT" > ./postgres_cert.crt  # Save to current directory
+        echo "$POSTGRES_SSL_CERT" > ./postgres_cert.crt
 
-    - name: Debug SSL certificate setup
+    - name: Test Postgres Connection
       run: |
-        # Print out the certificate to confirm the contents (for debugging)
-        cat ./postgres_cert.crt
+        apt-get update
+        apt-get install -y postgresql-client
+        PGPASSWORD=$PGPASSWORD psql -h 142.93.89.248 -U $PGUSER -d $PGDATABASE -p 25060 -c 'SELECT 1;' || exit 1
+      env:
+        PGPASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        PGUSER: ${{ secrets.DATABASE_USER }}
+        PGDATABASE: ${{ secrets.DATABASE_NAME }}
 
     - name: Set up environment variables
       run: |
-        # Add the Payload secret to the environment
         echo "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" >> $GITHUB_ENV
-
-        # Add the PostgreSQL database URL to the environment with SSL options
         echo "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=require&sslrootcert=./postgres_cert.crt" >> $GITHUB_ENV
       env:
         PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
@@ -53,18 +54,17 @@ jobs:
         else
           echo "Node.js is not installed."
         fi
-
         echo "Installing Node.js 20.x..."
         curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         sudo apt-get install -y nodejs
 
     - name: Install dependencies
       run: |
-        npm install || exit 1  # Install all dependencies
+        npm install || exit 1
 
     - name: Build the application
       run: |
-        npm run build || exit 1  # Run the build command
+        npm run build || exit 1
       timeout-minutes: 20
 
     - name: Deploy to Droplet
@@ -79,4 +79,4 @@ jobs:
         EOF
 
     - name: Clean up SSH keys
-      run: rm -rf ~/.ssh  # Clean up SSH keys after the deployment
+      run: rm -rf ~/.ssh
