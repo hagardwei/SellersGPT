@@ -29,12 +29,12 @@ jobs:
 
       - name: Deploy to Droplet
         run: |
-          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << 'EOF'
+          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << EOF
             set -e
             cd /root/sellerapp/SellersGPT
 
             echo "Installing Node.js if needed..."
-            if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
+            if ! command -v node >/dev/null || [[ \$(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
@@ -53,7 +53,7 @@ jobs:
             export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
 
             echo "Testing PostgreSQL connection..."
-            psql "postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require&sslrootcert=${PGSSLCERT}" -c '\conninfo'
+            psql "postgresql://\$PGUSER:\$PGPASSWORD@\$PGHOST:\$PGPORT/\$PGDATABASE?sslmode=require&sslrootcert=\$PGSSLCERT" -c '\conninfo'
 
             echo "Building Next.js application..."
             npm run build
