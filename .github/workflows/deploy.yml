@@ -33,7 +33,7 @@ jobs:
             set -e
             cd /root/sellerapp/SellersGPT
 
-            # Install Node.js 20.x if missing or old
+            echo "Installing Node.js if needed..."
             if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
@@ -53,11 +53,7 @@ jobs:
             export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
 
             echo "Testing PostgreSQL connection..."
-            if ! command -v psql >/dev/null; then
-              apt-get update
-              apt-get install -y postgresql-client
-            fi
-            psql -c '\conninfo'
+            psql "postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require&sslrootcert=${PGSSLCERT}" -c '\conninfo'
 
             echo "Building Next.js application..."
             npm run build
@@ -74,6 +70,3 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
           PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
-
-      - name: Clean up SSH keys
-        run: rm -rf ~/.ssh
