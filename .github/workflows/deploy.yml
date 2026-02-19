@@ -15,7 +15,7 @@ jobs:
             set -e
             echo "Testing PostgreSQL connection..."
 
-            export DATABASE_URL="${{ secrets.DATABASE_URL }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt"
+            export "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=require&sslrootcert=./postgres_cert.crt"
 
             # Try connecting with psql (install if missing)
             if ! command -v psql >/dev/null; then
