@@ -19,26 +19,40 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Set up SSL certificate
+      - name: Upload PostgreSQL certificate to Droplet
         run: |
-          echo "$SSH_PRIVATE_KEY" > ./postgres_cert.crt
-          
+          echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt
+
       - name: Test PostgreSQL Connection on Droplet
         run: |
-          ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=60 root@178.128.64.173 << 'EOF'
+          ssh -i ~/.ssh/id_ed25519 -T -o StrictHostKeyChecking=no root@178.128.64.173 << EOF
             set -e
             echo "Testing PostgreSQL connection..."
 
-            export "DATABASE_URL=${{ secrets.DATABASE_URL }}?sslmode=require&sslrootcert=./postgres_cert.crt"
+            # Path to SSL certificate on droplet
+            SSL_CERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
 
-            # Try connecting with psql (install if missing)
+            # Install psql if missing
             if ! command -v psql >/dev/null; then
               apt-get update
               apt-get install -y postgresql-client
             fi
 
-            psql "$DATABASE_URL" -c '\conninfo'
+            # Test connection using environment variables
+            export PGSSLMODE=require
+            export PGSSLCERT="\$SSL_CERT"
+            export PGUSER="${DATABASE_USER}"
+            export PGPASSWORD="${DATABASE_PASSWORD}"
+            export PGHOST="${DB_HOST}"
+            export PGPORT="${DB_PORT}"
+            export PGDATABASE="${DATABASE_NAME}"
+
+            psql -c '\conninfo'
             echo "Database connection successful!"
           EOF
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
