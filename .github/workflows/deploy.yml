@@ -29,44 +29,44 @@ jobs:
 
       - name: Deploy to Droplet
         run: |
-          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << EOF
+          ssh -i ~/.ssh/id_ed25519 root@178.128.64.173 "
             set -e
+
             cd /root/sellerapp/SellersGPT
 
-            echo "Installing Node.js if needed..."
-            if ! command -v node >/dev/null || [[ \$(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
+            echo 'Installing Node.js if needed...'
+            if ! command -v node >/dev/null || [ \$(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
 
-            echo "Installing dependencies..."
+            echo 'Installing dependencies...'
             npm install
 
-            echo "Creating .env.production..."
-            cat > .env.production <<EOL
-            DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt
-            PAYLOAD_SECRET=${PAYLOAD_SECRET}
-            NODE_ENV=production
-            EOL
+            echo 'Writing postgres certificate...'
+            echo '${{ secrets.POSTGRES_SSL_CERT }}' > postgres_cert.crt
+            chmod 600 postgres_cert.crt
 
-                  echo "Testing DB connection..."
-                  psql "postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt" -c '\conninfo'
+            echo 'Creating .env.production...'
+            printf 'DATABASE_URL=postgresql://%s:%s@%s:%s/%s?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt\n' \
+              '${{ secrets.DATABASE_USER }}' \
+              '${{ secrets.DATABASE_PASSWORD }}' \
+              '${{ secrets.DB_HOST }}' \
+              '${{ secrets.DB_PORT }}' \
+              '${{ secrets.DATABASE_NAME }}' \
+              > .env.production
 
-                  echo "Starting Next.js build..."
-                  NODE_ENV=production npx next build --debug || {
-                    echo "Next.js build failed!"
-                    exit 1
-                  }
+            printf 'PAYLOAD_SECRET=%s\n' '${{ secrets.PAYLOAD_SECRET }}' >> .env.production
+            printf 'NODE_ENV=production\n' >> .env.production
 
-                  echo "Restarting app..."
-                  pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
+            echo 'Testing DB connection...'
+            psql 'postgresql://${{ secrets.DATABASE_USER }}:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DATABASE_NAME }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt' -c '\conninfo'
 
-                  echo "Deployment complete!"
-                EOF
-        env:
-          DATABASE_USER: ${{ secrets.DATABASE_USER }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+            echo 'Building Next.js...'
+            NODE_ENV=production npx next build
+
+            echo 'Restarting app...'
+            pm2 restart SellersGPT || pm2 start npm --name SellersGPT -- start
+
+            echo 'Deployment complete!'
+          "
