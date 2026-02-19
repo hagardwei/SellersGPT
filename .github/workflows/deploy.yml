@@ -59,6 +59,8 @@ jobs:
             export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
 
             echo "Building Next.js application..."
+            
+            export $(grep -v '^#' .env | xargs)
             npm run build
 
             echo "Restarting application..."
