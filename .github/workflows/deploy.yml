@@ -78,6 +78,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
           sudo apt-get install -y nodejs
       
-      - name: Install dependencies
+      - name: Build the application
         run: |
-          npm install || exit 1
+          npm run build || exit 1
+        timeout-minutes: 20
