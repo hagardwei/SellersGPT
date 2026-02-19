@@ -10,18 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up SSH keys
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Set up SSH keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Set up SSL certificate
-      run: |
-        echo "$SSH_PRIVATE_KEY" > ./postgres_cert.crt
+      - name: Set up SSL certificate
+        run: |
+          echo "$SSH_PRIVATE_KEY" > ./postgres_cert.crt
+          
       - name: Test PostgreSQL Connection on Droplet
         run: |
           ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=60 root@178.128.64.173 << 'EOF'
