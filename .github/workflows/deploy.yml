@@ -29,8 +29,8 @@ jobs:
 
     - name: Test Postgres Connection
       run: |
-        apt-get update
-        apt-get install -y postgresql-client
+        sudo apt-get update  # Use sudo to ensure the command has elevated privileges
+        sudo apt-get install -y postgresql-client
         PGPASSWORD=$PGPASSWORD psql -h 142.93.89.248 -U $PGUSER -d $PGDATABASE -p 25060 -c 'SELECT 1;' || exit 1
       env:
         PGPASSWORD: ${{ secrets.DATABASE_PASSWORD }}
