@@ -29,44 +29,28 @@ jobs:
 
       - name: Deploy to Droplet
         run: |
-          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << EOF
+          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << 'EOF'
             set -e
             cd /root/sellerapp/SellersGPT
 
-            echo "Installing Node.js if needed..."
-            if ! command -v node >/dev/null || [[ \$(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
+            # Install Node.js if needed
+            if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
 
-            echo "Installing project dependencies..."
+            # Install dependencies
             npm install
 
-            echo "Setting database connection..."
-            export PGSSLMODE=require
-            export PGSSLCERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
-            export PGUSER="${DATABASE_USER}"
-            export PGPASSWORD="${DATABASE_PASSWORD}"
-            export PGHOST="${DB_HOST}"
-            export PGPORT="${DB_PORT}"
-            export PGDATABASE="${DATABASE_NAME}"
-            export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
+            # Create .env.production for Next.js
+            echo "DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt" > .env.production
+            echo "PAYLOAD_SECRET=${PAYLOAD_SECRET}" >> .env.production
 
-            echo "Testing PostgreSQL connection..."
-            psql "postgresql://\$PGUSER:\$PGPASSWORD@\$PGHOST:\$PGPORT/\$PGDATABASE?sslmode=require&sslrootcert=\$PGSSLCERT" -c '\conninfo'
+            # Build Next.js
+            NODE_ENV=production npm run build
 
-            export DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt"
-            export PAYLOAD_SECRET="${PAYLOAD_SECRET}"
-
-            echo "Building Next.js application..."
-            
-            export $(grep -v '^#' .env | xargs)
-            npm run build
-
-            echo "Restarting application..."
+            # Start application with PM2
             pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
-
-            echo "Deployment complete!"
           EOF
         env:
           DATABASE_USER: ${{ secrets.DATABASE_USER }}
