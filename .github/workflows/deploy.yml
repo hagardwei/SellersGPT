@@ -42,7 +42,7 @@ jobs:
             echo "Installing project dependencies..."
             npm install
 
-            echo "Setting environment variables for database..."
+            echo "Setting database connection..."
             export PGSSLMODE=require
             export PGSSLCERT="/root/sellerapp/SellersGPT/postgres_cert.crt"
             export PGUSER="${DATABASE_USER}"
@@ -58,7 +58,7 @@ jobs:
             echo "Building Next.js application..."
             npm run build
 
-            echo "Restarting application with PM2..."
+            echo "Restarting application..."
             pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
 
             echo "Deployment complete!"
