@@ -29,29 +29,40 @@ jobs:
 
       - name: Deploy to Droplet
         run: |
-          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << 'EOF'
+          ssh -i ~/.ssh/id_ed25519 -T root@178.128.64.173 << EOF
             set -e
             cd /root/sellerapp/SellersGPT
 
-            # Install Node.js if needed
-            if ! command -v node >/dev/null || [[ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
+            echo "Installing Node.js if needed..."
+            if ! command -v node >/dev/null || [[ \$(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]]; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
 
-            # Install dependencies
+            echo "Installing dependencies..."
             npm install
 
-            # Create .env.production for Next.js
-            echo "DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt" > .env.production
-            echo "PAYLOAD_SECRET=${PAYLOAD_SECRET}" >> .env.production
+            echo "Creating .env.production..."
+            cat > .env.production <<EOL
+            DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt
+            PAYLOAD_SECRET=${PAYLOAD_SECRET}
+            NODE_ENV=production
+            EOL
 
-            # Build Next.js
-            NODE_ENV=production npm run build
+                  echo "Testing DB connection..."
+                  psql "postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DB_HOST}:${DB_PORT}/${DATABASE_NAME}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt" -c '\conninfo'
 
-            # Start application with PM2
-            pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
-          EOF
+                  echo "Starting Next.js build..."
+                  NODE_ENV=production npx next build --debug || {
+                    echo "Next.js build failed!"
+                    exit 1
+                  }
+
+                  echo "Restarting app..."
+                  pm2 restart SellersGPT || pm2 start npm --name "SellersGPT" -- start
+
+                  echo "Deployment complete!"
+                EOF
         env:
           DATABASE_USER: ${{ secrets.DATABASE_USER }}
           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
