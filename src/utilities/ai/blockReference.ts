@@ -145,6 +145,24 @@ export const VideoSchema = {
     },
 }
 
+export const TableOfContentsSchema = {
+    slug: 'tableOfContents',
+    description: 'Automatically generates a clickable table of contents based on page headings (H2-H4). Required for long-form SEO articles.',
+    fields: {
+        heading: 'string (optional, e.g. "On this page")',
+    },
+}
+
+export const RelatedPostsSchema = {
+    slug: 'relatedPosts',
+    description: 'Displays a grid of related blog posts or articles. Essential for topic clusters and internal linking.',
+    fields: {
+        title: 'string (optional)',
+        introContent: 'LexicalJSON (optional text above the grid)',
+        limit: 'number (default 3)',
+    },
+}
+
 export const ArchiveSchema = {
     slug: 'archive',
     description: 'Dynamically list items from a collection (posts/categories).',
@@ -197,4 +215,6 @@ export const AllBlocks = [
     ArchiveSchema,
     MediaBlockSchema,
     FormBlockSchema,
+    TableOfContentsSchema,
+    RelatedPostsSchema,
 ]

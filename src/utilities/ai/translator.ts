@@ -31,6 +31,8 @@ const TRANSLATABLE_KEYS = new Set([
   'introContent',
   'buttonText',
   'ctaText',
+  'questions',
+  'answer',
 ]);
 
 

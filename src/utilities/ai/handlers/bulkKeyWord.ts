@@ -23,7 +23,6 @@ export const handleBulkKeyword = async (jobId: any, job: any, payload: any, queu
                 where: { slug: { equals: slug } },
                 limit: 1
             })
-            console.log(existing, "+++++++++++")
             if (existing.docs.length) {
                 console.log(`[BulkKeyword] Skipping existing slug: ${slug}`);
                 continue

@@ -17,6 +17,8 @@ import { FAQBlock } from '../../blocks/FAQ/config'
 import { TimelineBlock } from '../../blocks/Timeline/config'
 import { GalleryBlock } from '../../blocks/Gallery/config'
 import { VideoBlock } from '../../blocks/Video/config'
+import { TableOfContents } from '../../blocks/TableOfContents/config'
+import { RelatedPosts } from '../../blocks/RelatedPosts/config'
 import { hero } from '../../heros/config'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
@@ -142,6 +144,8 @@ export const Pages: CollectionConfig<'pages'> = {
                 TimelineBlock,
                 GalleryBlock,
                 VideoBlock,
+                TableOfContents,
+                RelatedPosts,
               ],
               required: true,
               admin: {

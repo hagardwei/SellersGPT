@@ -17,10 +17,12 @@ export const handleGeneratePage = async (jobId: any, job: any, payload: any) => 
     if (input.template === "seo-article") {
         input.blocks = [
             "hero",
-            "richText",
+            "tableOfContents",
+            "content",
             "featureGrid",
-            "richText",
+            "content",
             "faq",
+            "relatedPosts",
             "cta",
         ]
     }

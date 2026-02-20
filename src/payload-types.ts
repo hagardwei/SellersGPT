@@ -181,6 +181,8 @@ export interface Page {
     | TimelineBlock
     | GalleryBlock
     | VideoBlock
+    | TableOfContentsBlock
+    | RelatedPostsBlock
   )[];
   meta?: {
     title?: string | null;
@@ -1122,6 +1124,66 @@ export interface VideoBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableOfContentsBlock".
+ */
+export interface TableOfContentsBlock {
+  heading?: string | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableOfContents';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RelatedPostsBlock".
+ */
+export interface RelatedPostsBlock {
+  title?: string | null;
+  introContent?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  limit?: number | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'relatedPosts';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
  */
 export interface Header {
@@ -1648,6 +1710,8 @@ export interface PagesSelect<T extends boolean = true> {
         timeline?: T | TimelineBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
         video?: T | VideoBlockSelect<T>;
+        tableOfContents?: T | TableOfContentsBlockSelect<T>;
+        relatedPosts?: T | RelatedPostsBlockSelect<T>;
       };
   meta?:
     | T
@@ -2038,6 +2102,52 @@ export interface VideoBlockSelect<T extends boolean = true> {
   url?: T;
   thumbnail?: T;
   aspectRatio?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableOfContentsBlock_select".
+ */
+export interface TableOfContentsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RelatedPostsBlock_select".
+ */
+export interface RelatedPostsBlockSelect<T extends boolean = true> {
+  title?: T;
+  introContent?: T;
+  limit?: T;
   settings?:
     | T
     | {
