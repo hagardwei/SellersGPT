@@ -28,6 +28,7 @@ export const AIJobs: CollectionConfig = {
                 { label: 'Translate Document', value: 'TRANSLATE_DOCUMENT' },
                 { label: 'Bulk Keyword Generation', value: 'BULK_KEYWORD_GENERATION' },
                 { label: 'Generate Keyword Article', value: 'GENERATE_KEYWORD_ARTICLE' },
+                { label: 'Agent Sync', value: 'AGENT_SYNC' },
             ],
         },
         {
@@ -158,6 +159,10 @@ export const AIJobs: CollectionConfig = {
         {
             name: 'completion_percentage',
             type: 'number'
+        },
+        {
+            name: 'payload',
+            type: 'json',
         },
         {
             name: 'completed_at',

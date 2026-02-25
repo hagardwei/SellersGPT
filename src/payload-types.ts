@@ -77,6 +77,7 @@ export interface Config {
     'ai-jobs': AiJob;
     translations: Translation;
     'bulk-keyword-uploads': BulkKeywordUpload;
+    leads: Lead;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -104,6 +105,7 @@ export interface Config {
     'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
     translations: TranslationsSelect<false> | TranslationsSelect<true>;
     'bulk-keyword-uploads': BulkKeywordUploadsSelect<false> | BulkKeywordUploadsSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -121,9 +123,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'website-info': WebsiteInfo;
+    'chatbot-settings': ChatbotSetting;
   };
   globalsSelect: {
     'website-info': WebsiteInfoSelect<false> | WebsiteInfoSelect<true>;
+    'chatbot-settings': ChatbotSettingsSelect<false> | ChatbotSettingsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -1262,7 +1266,8 @@ export interface AiJob {
     | 'REGENERATE_PAGE'
     | 'TRANSLATE_DOCUMENT'
     | 'BULK_KEYWORD_GENERATION'
-    | 'GENERATE_KEYWORD_ARTICLE';
+    | 'GENERATE_KEYWORD_ARTICLE'
+    | 'AGENT_SYNC';
   status: 'pending' | 'running' | 'completed' | 'failed';
   /**
    * Current execution step (e.g. "INITIALIZATION", "PLANNING")
@@ -1346,6 +1351,15 @@ export interface AiJob {
   total_keywords?: number | null;
   processed_keywords?: number | null;
   completion_percentage?: number | null;
+  payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   completed_at?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1390,6 +1404,36 @@ export interface BulkKeywordUpload {
   totalKeywords?: number | null;
   processedKeywords?: number | null;
   parentJobId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message?: string | null;
+  /**
+   * The URL where the lead was captured
+   */
+  sourceUrl?: string | null;
+  status?: ('new' | 'contacted' | 'converted' | 'lost') | null;
+  /**
+   * Chat transcript associated with this lead
+   */
+  transcript?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1623,6 +1667,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'bulk-keyword-uploads';
         value: number | BulkKeywordUpload;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: number | Lead;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2405,6 +2453,7 @@ export interface AiJobsSelect<T extends boolean = true> {
   total_keywords?: T;
   processed_keywords?: T;
   completion_percentage?: T;
+  payload?: T;
   completed_at?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2441,6 +2490,21 @@ export interface BulkKeywordUploadsSelect<T extends boolean = true> {
   totalKeywords?: T;
   processedKeywords?: T;
   parentJobId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  message?: T;
+  sourceUrl?: T;
+  status?: T;
+  transcript?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2740,6 +2804,22 @@ export interface WebsiteInfo {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chatbot-settings".
+ */
+export interface ChatbotSetting {
+  id: number;
+  enabled?: boolean | null;
+  welcomeMessage?: string | null;
+  /**
+   * Link to your Calendly page for scheduling meetings
+   */
+  calendlyLink?: string | null;
+  emailNotifications?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "website-info_select".
  */
 export interface WebsiteInfoSelect<T extends boolean = true> {
@@ -2752,6 +2832,19 @@ export interface WebsiteInfoSelect<T extends boolean = true> {
   services?: T;
   brandTone?: T;
   isCompleted?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chatbot-settings_select".
+ */
+export interface ChatbotSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  welcomeMessage?: T;
+  calendlyLink?: T;
+  emailNotifications?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

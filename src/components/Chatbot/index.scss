@@ -1,0 +1,140 @@
+.chatbot {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  font-family: sans-serif;
+
+  &__toggle {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  &__window {
+    position: absolute;
+    bottom: 4.5rem;
+    right: 0;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &__header {
+    background: #007bff;
+    color: white;
+    padding: 1rem;
+    h3 { margin: 0; font-size: 1.1rem; }
+  }
+
+  &__messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__message {
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    max-width: 80%;
+    font-size: 0.9rem;
+    line-height: 1.4;
+
+    &--bot {
+      background: #f0f0f0;
+      align-self: flex-start;
+      border-bottom-left-radius: 0.1rem;
+    }
+
+    &--user {
+      background: #007bff;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 0.1rem;
+    }
+  }
+
+  &__lead-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+
+    input {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 0.25rem;
+    }
+
+    button {
+      padding: 0.5rem;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+  }
+
+  &__input {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 0.5rem;
+
+    input {
+      flex: 1;
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      outline: none;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      width: 2.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+  }
+
+  &__footer {
+    padding: 0.5rem;
+    text-align: center;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    a {
+      color: #007bff;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+  }
+}

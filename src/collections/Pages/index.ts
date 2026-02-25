@@ -39,6 +39,8 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
+import { aiJobQueue } from '@/lib/redis'
+import { triggerAgentSync } from './hooks/triggerAgentSync'
 
 /**
  * Helper to call revalidation route
@@ -305,7 +307,6 @@ export const Pages: CollectionConfig<'pages'> = {
     afterChange: [
         async ({ doc, previousDoc }) => {
         // Only revalidate published pages
-        console.log(doc, "doccccccccccccccccccccccccccccccc")
         if (doc._status === 'published') {
           const path = doc.slug === 'home' ? '/' : `/${doc.slug}`
           await revalidatePagePath(path, 'pages-sitemap')
@@ -316,15 +317,23 @@ export const Pages: CollectionConfig<'pages'> = {
           await revalidatePagePath(oldPath, 'pages-sitemap')
         }
       },
-      triggerAutomatedTranslations
+      // triggerAutomatedTranslations,
+      triggerAgentSync
     ],
     beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
     beforeChange: [populatePublishedAt, getBlockDuplicateSlug('pages'), syncGroupSlug],
     afterDelete: [
-      async ({ doc }) => {
-        const path = doc?.slug === 'home' ? '/' : `/${doc?.slug}`
-        await revalidatePagePath(path, 'pages-sitemap')
-      },
+      // async ({ doc }) => {
+      //   const path = doc?.slug === 'home' ? '/' : `/${doc?.slug}`
+      //   await revalidatePagePath(path, 'pages-sitemap')
+      //   if(doc.status == "published"){
+      //     await aiJobQueue.add("AGENT_SYNC", {
+      //       workspaceId: doc.workspace,
+      //       sourceId: doc.id,
+      //       sourceType: "page"
+      //     })
+      //   }
+      // },
     ],
   },
   versions: {

@@ -16,6 +16,7 @@ import { handleGeneratePage } from './handlers/generatePage'
 import { handleRegeneratePage } from './handlers/regeneratePage'
 import { handleTranslateDocument } from './handlers/translateDocument'
 import { handleBulkKeyword } from './handlers/bulkKeyWord'
+import { handleAgentSync } from './handlers/agentSync'
 
 
  const MAX_REVIEW_RETRIES = 2
@@ -64,12 +65,16 @@ export const runAIJob = async (jobId: string | number): Promise<void> => {
         await handleRegeneratePage(jobId, job, payload);
         break;
 
-      case 'TRANSLATE_DOCUMENT':
-        await handleTranslateDocument(jobId, job, payload);
-        break
+      // case 'TRANSLATE_DOCUMENT':
+      //   await handleTranslateDocument(jobId, job, payload);
+      //   break
 
       case 'BULK_KEYWORD_GENERATION':
         await handleBulkKeyword(jobId, job, payload, aiJobQueue);
+        break;
+
+      case 'AGENT_SYNC':
+        await handleAgentSync(jobId, job, payload);
         break;
 
       default:

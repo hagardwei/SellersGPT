@@ -1,9 +1,15 @@
 import OpenAI from 'openai'
+import { DOAgentService } from './doAgentService'
 
 export type AIResponse = {
     success: boolean
     data?: any
     error?: string
+}
+
+export type ChatMessage = {
+    role: 'user' | 'assistant' | 'system'
+    content: string
 }
 
 export interface AIModelService {
@@ -19,8 +25,8 @@ export class GeminiService implements AIModelService {
         this.apiKey = process.env.GEMINI_API_KEY || ''
     }
 
-    async generate(prompt: string, schema?: any): Promise<AIResponse> {
-        console.log(`[Gemini] Generating with prompt: ${prompt.substring(0, 50)}...`)
+    async generate(prompt: string | ChatMessage[], schema?: any): Promise<AIResponse> {
+        // console.log(`[Gemini] Generating with prompt: ${prompt.substring(0, 50)}...`)
 
         return {
             success: true,
@@ -41,14 +47,33 @@ export class OpenAIService implements AIModelService {
         })
     }
 
-    async generate(prompt: string, schema?: any): Promise<AIResponse> {
+    async generate(input: string | ChatMessage[], options?: { type?: 'json_object' }): Promise<AIResponse> {
         try {
-            console.log(`[OpenAI] Generating with prompt: ${prompt.substring(0, 50)}...`)
+            const isChat = Array.isArray(input)
+            let messages: ChatMessage[] = isChat
+                ? input
+                : [{ role: 'user', content: input }]
+            console.log(`[OpenAI] Generating with prompt: ${isChat ? 'chat messages' : 'string prompt'}...`)
+
+            if (options?.type === 'json_object') {
+                messages = [
+                    {
+                    role: 'system',
+                    content:
+                        'You must respond ONLY with a valid JSON object. Return valid JSON.',
+                    },
+                    ...messages,
+                ]
+            }
+
 
             const response = await this.client.chat.completions.create({
                 model: this.modelName,
-                messages: [{ role: 'user', content: prompt }],
-                response_format: schema ? { type: 'json_object' } : undefined,
+                messages,
+                response_format:
+                    options?.type === 'json_object'
+                        ? { type: 'json_object' }
+                        : undefined,
             })
 
             console.log(response, "response")
@@ -60,7 +85,10 @@ export class OpenAIService implements AIModelService {
 
             return {
                 success: true,
-                data: schema ? JSON.parse(content) : content,
+                data:
+                    options?.type === 'json_object'
+                        ? JSON.parse(content)
+                        : content,
             }
         } catch (error: any) {
             console.error('[OpenAI Error]', error)
@@ -76,5 +104,8 @@ export class OpenAIService implements AIModelService {
  * Factory to get the configured AI implementation.
  */
 export const getAIService = (): AIModelService => {
+    if(process.env.DO_AGENT_WORKSPACE_API_URL && process.env.DO_AGENT_WORKSPACE_TOKEN){
+        return new DOAgentService()
+    }
     return new OpenAIService()
 }

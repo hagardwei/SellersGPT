@@ -18,9 +18,13 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { Translations } from './collections/Translations'
 import { BulkKeyWordUploads } from './collections/BulkKeyWordUploads'
+import { Leads } from "./collections/Leads"
+import { ChatbotSettings } from './globals/ChatbotSettings/config'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+console.log("SMTP_HOST:", process.env.SMTP_HOST)
 
 export default buildConfig({
   admin: {
@@ -66,9 +70,23 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads],
+  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads, Leads],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [WebsiteInfo],
+  globals: [WebsiteInfo, ChatbotSettings],
+  
+  email: nodemailerAdapter({
+    defaultFromAddress: 'info@payloadcms.com',
+    defaultFromName: 'Payload',
+    // Nodemailer transportOptions
+    transportOptions: {
+      host: process.env.SMTP_HOST,
+      port: 587,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    },
+  }),
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

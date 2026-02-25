@@ -16,6 +16,7 @@ import { draftMode } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
+import { Chatbot } from '@/components/Chatbot'
 
 export default async function RootLayout({
   children,
@@ -46,6 +47,7 @@ export default async function RootLayout({
             <Header lang={lang} />
             {children}
             <Footer lang={lang} />
+            <Chatbot />
           </TranslationProvider>
         </Providers>
       </body>
