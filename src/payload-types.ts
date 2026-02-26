@@ -78,6 +78,7 @@ export interface Config {
     translations: Translation;
     'bulk-keyword-uploads': BulkKeywordUpload;
     leads: Lead;
+    news_raw: NewsRaw;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -106,6 +107,7 @@ export interface Config {
     translations: TranslationsSelect<false> | TranslationsSelect<true>;
     'bulk-keyword-uploads': BulkKeywordUploadsSelect<false> | BulkKeywordUploadsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
+    news_raw: NewsRawSelect<false> | NewsRawSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -124,10 +126,14 @@ export interface Config {
   globals: {
     'website-info': WebsiteInfo;
     'chatbot-settings': ChatbotSetting;
+    'industry-news-settings': IndustryNewsSetting;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     'website-info': WebsiteInfoSelect<false> | WebsiteInfoSelect<true>;
     'chatbot-settings': ChatbotSettingsSelect<false> | ChatbotSettingsSelect<true>;
+    'industry-news-settings': IndustryNewsSettingsSelect<false> | IndustryNewsSettingsSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -135,6 +141,7 @@ export interface Config {
   };
   jobs: {
     tasks: {
+      newsAutomation: TaskNewsAutomation;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -1267,7 +1274,8 @@ export interface AiJob {
     | 'TRANSLATE_DOCUMENT'
     | 'BULK_KEYWORD_GENERATION'
     | 'GENERATE_KEYWORD_ARTICLE'
-    | 'AGENT_SYNC';
+    | 'AGENT_SYNC'
+    | 'INDUSTRY_NEWS_AUTOMATION';
   status: 'pending' | 'running' | 'completed' | 'failed';
   /**
    * Current execution step (e.g. "INITIALIZATION", "PLANNING")
@@ -1416,6 +1424,8 @@ export interface Lead {
   name: string;
   email: string;
   phone?: string | null;
+  company?: string | null;
+  need?: string | null;
   message?: string | null;
   /**
    * The URL where the lead was captured
@@ -1434,6 +1444,27 @@ export interface Lead {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news_raw".
+ */
+export interface NewsRaw {
+  id: number;
+  source: string;
+  external_id: string;
+  title: string;
+  description?: string | null;
+  content?: string | null;
+  url: string;
+  published_at: string;
+  /**
+   * When this article was fetched from APITube
+   */
+  fetched_at: string;
+  processed?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1581,7 +1612,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug: 'inline' | 'newsAutomation' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1614,10 +1645,19 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'newsAutomation' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1671,6 +1711,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'leads';
         value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'news_raw';
+        value: number | NewsRaw;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2501,10 +2545,29 @@ export interface LeadsSelect<T extends boolean = true> {
   name?: T;
   email?: T;
   phone?: T;
+  company?: T;
+  need?: T;
   message?: T;
   sourceUrl?: T;
   status?: T;
   transcript?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news_raw_select".
+ */
+export interface NewsRawSelect<T extends boolean = true> {
+  source?: T;
+  external_id?: T;
+  title?: T;
+  description?: T;
+  content?: T;
+  url?: T;
+  published_at?: T;
+  fetched_at?: T;
+  processed?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2737,6 +2800,7 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   queue?: T;
   waitUntil?: T;
   processing?: T;
+  meta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2820,6 +2884,56 @@ export interface ChatbotSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industry-news-settings".
+ */
+export interface IndustryNewsSetting {
+  id: number;
+  enabled?: boolean | null;
+  /**
+   * API key for fetching news from APITube
+   */
+  apiTubeKey?: string | null;
+  searchQueries?:
+    | {
+        query: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Maximum number of news articles to fetch and process each day
+   */
+  dailyCap?: number | null;
+  /**
+   * Category to assign to news posts
+   */
+  targetCategory?: (number | null) | Category;
+  /**
+   * Threshold for de-duplication (0.0 to 1.0)
+   */
+  similarityThreshold?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: number;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "website-info_select".
  */
 export interface WebsiteInfoSelect<T extends boolean = true> {
@@ -2848,6 +2962,46 @@ export interface ChatbotSettingsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industry-news-settings_select".
+ */
+export interface IndustryNewsSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  apiTubeKey?: T;
+  searchQueries?:
+    | T
+    | {
+        query?: T;
+        id?: T;
+      };
+  dailyCap?: T;
+  targetCategory?: T;
+  similarityThreshold?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskNewsAutomation".
+ */
+export interface TaskNewsAutomation {
+  input: {
+    triggeredBy?: string | null;
+  };
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

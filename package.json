@@ -8,6 +8,7 @@
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build",
     "postbuild": "next-sitemap --config next-sitemap.config.cjs",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --turbo",
+    "jobs": "payload jobs:run",
     "dev:prod": "cross-env NODE_OPTIONS=--no-deprecation rm -rf .next && pnpm build && pnpm start",
     "worker:ai": "tsx src/lib/workers/aiJobWorker.ts",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
@@ -25,6 +26,7 @@
   "dependencies": {
     "@payloadcms/admin-bar": "3.73.0",
     "@payloadcms/db-postgres": "3.73.0",
+    "@payloadcms/email-nodemailer": "^3.73.0",
     "@payloadcms/live-preview-react": "3.73.0",
     "@payloadcms/next": "3.73.0",
     "@payloadcms/plugin-form-builder": "3.73.0",
@@ -56,7 +58,9 @@
     "react-dom": "19.2.1",
     "react-hook-form": "7.45.4",
     "sharp": "0.34.2",
-    "tailwind-merge": "^3.4.0"
+    "slugify": "^1.6.6",
+    "tailwind-merge": "^3.4.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

@@ -24,6 +24,7 @@ import { cloneTranslationHandler } from '../../utilities/cloneTranslation'
 import { syncGroupSlug } from '../../utilities/syncGroupSlug'
 import { validateUniqueGroupLanguage } from '../../utilities/validateUniqueGroupLanguage'
 import { deleteGroupHandler } from '../../utilities/deleteGroup'
+import { triggerAgentSync } from '../Pages/hooks/triggerAgentSync'
 
 import {
   MetaDescriptionField,
@@ -284,7 +285,7 @@ export const Posts: CollectionConfig<'posts'> = {
     },
   ],
   hooks: {
-    afterChange: [revalidatePost],
+    afterChange: [revalidatePost, triggerAgentSync],
     beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
     beforeChange: [getBlockDuplicateSlug('posts'), syncGroupSlug],
     afterRead: [populateAuthors],

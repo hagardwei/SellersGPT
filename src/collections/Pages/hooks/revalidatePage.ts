@@ -7,13 +7,6 @@ import type { Page } from '../../../payload-types'
 const REVALIDATE_ENDPOINT = `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`
 // const SECRET = process.env.PAYLOAD_SECRET
 
-console.log("+++++++++++++++++++++++++++++++++++")
-console.log("+++++++++++++++++++++++++++++++++++")
-console.log("+++++++++++++++++++++++++++++++++++")
-console.log("+++++++++++++++++++++++++++++++++++")
-console.log("+++++++++++++++++++++++++++++++++++")
-console.log("+++++++++++++++++++++++++++++++++++")
-console.log("+++++++++++++++++++++++++++++++++++")
 async function requestRevalidate(path: string, language: Page['language']) {
   try {
     await fetch(REVALIDATE_ENDPOINT, {
