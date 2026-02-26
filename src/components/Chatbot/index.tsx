@@ -4,7 +4,7 @@ import './index.scss'
 
 export const Chatbot: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false)
-    const [messages, setMessages] = useState<{ role: 'user' | 'bot'; content: string }[]>([])
+    const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
     const [input, setInput] = useState('')
     const [showLeadForm, setShowLeadForm] = useState(false)
     const [settings, setSettings] = useState<any>(null)
@@ -18,7 +18,7 @@ export const Chatbot: React.FC = () => {
                     const data = await response.json()
                     setSettings(data)
                     if(data.welcomeMessage){
-                        setMessages([{ role: 'bot' as const, content: data.welcomeMessage }])
+                        setMessages([{ role: 'assistant' as const, content: data.welcomeMessage }])
                     }
                 }
             } catch (error) {
@@ -30,21 +30,23 @@ export const Chatbot: React.FC = () => {
 
     const handleSend = async () => {
         if(!input.trim()) return;
-
-        const newMessages: { role: 'user' | 'bot'; content: string }[] = [...messages, { role: 'user' as const, content: input }]
+        const userMessage = { role: 'user', content: input }
+        const newMessages: any  = [...messages, userMessage];
         setMessages(newMessages)
         setInput('')
-
+        console.log("__________: ", newMessages)
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch('https://mumq5yapoa4pg7n434mig6xq.agents.do-ai.run/api/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: input, history: messages })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer Q_rsD94PZ-cPd85W34j_A9OFix8FBIOF` },
+                body: JSON.stringify({
+                    messages: newMessages
+                })
             })
 
             if(response.ok) {
                 const data = await response.json()
-                setMessages([...newMessages, {role: 'bot' as const, content: data.reply }])
+                setMessages([...newMessages, {role: 'assistant' as const, content: data.reply }])
                 if(data.askForLead){
                     setShowLeadForm(true)
                 }
@@ -64,7 +66,7 @@ export const Chatbot: React.FC = () => {
             })
 
             if(response.ok){
-                setMessages([...messages, { role: 'bot', 
+                setMessages([...messages, { role: 'assistant', 
                     content: 'Thank you! We will get back to you soon.' }])
                     setShowLeadForm(false)
             }

@@ -1416,6 +1416,8 @@ export interface Lead {
   name: string;
   email: string;
   phone?: string | null;
+  company?: string | null;
+  need?: string | null;
   message?: string | null;
   /**
    * The URL where the lead was captured
@@ -2501,6 +2503,8 @@ export interface LeadsSelect<T extends boolean = true> {
   name?: T;
   email?: T;
   phone?: T;
+  company?: T;
+  need?: T;
   message?: T;
   sourceUrl?: T;
   status?: T;
