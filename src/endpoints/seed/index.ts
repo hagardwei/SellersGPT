@@ -18,9 +18,11 @@ const collections: CollectionSlug[] = [
   'forms',
   'form-submissions',
   'search',
+  'header',
+  'footer',
 ]
 
-const globals: GlobalSlug[] = ['header', 'footer']
+const globals: GlobalSlug[] = []
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
 
@@ -44,20 +46,7 @@ export const seed = async ({
   payload.logger.info(`— Clearing collections and globals...`)
 
   // clear the database
-  await Promise.all(
-    globals.map((global) =>
-      payload.updateGlobal({
-        slug: global,
-        data: {
-          navItems: [],
-        },
-        depth: 0,
-        context: {
-          disableRevalidate: true,
-        },
-      }),
-    ),
-  )
+  // we do not need to clear globals specifically here as header/footer are now collections
 
   await Promise.all(
     collections.map((collection) => payload.db.deleteMany({ collection, req, where: {} })),
@@ -217,10 +206,16 @@ export const seed = async ({
 
   payload.logger.info(`— Seeding globals...`)
 
+  // No globals to seed currently as header/footer are collections
+
+  payload.logger.info(`— Seeding header and footer collections...`)
+
   await Promise.all([
-    payload.updateGlobal({
-      slug: 'header',
+    payload.create({
+      collection: 'header',
       data: {
+        language: 'en',
+        translation_group_id: 'header-group',
         navItems: [
           {
             link: {
@@ -242,9 +237,11 @@ export const seed = async ({
         ],
       },
     }),
-    payload.updateGlobal({
-      slug: 'footer',
+    payload.create({
+      collection: 'footer',
       data: {
+        language: 'en',
+        translation_group_id: 'footer-group',
         navItems: [
           {
             link: {

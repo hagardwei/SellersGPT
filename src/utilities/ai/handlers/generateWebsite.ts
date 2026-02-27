@@ -27,6 +27,81 @@ export const handleGenerateWebsite = async (jobId: any, job: AiJob, payload: any
 
     console.log(`[AI Orchestartor] Website plan created with ${plan?.pages?.length} pages`)
 
+    // Create/Update Header and Footer
+    const lang = 'en' // Default to English for now, can be updated to support more languages
+    const translationGroupIdHeader = 'header-group'
+    const translationGroupIdFooter = 'footer-group'
+
+    if (plan.header) {
+        const existingHeader = await payload.find({
+            collection: 'header',
+            where: {
+                language: { equals: lang }
+            },
+            limit: 1
+        })
+
+        const headerData = {
+            language: lang,
+            translation_group_id: translationGroupIdHeader,
+            navItems: plan.header.navItems.map((item: any) => ({
+                link: {
+                    type: 'custom',
+                    label: item.label,
+                    url: item.url,
+                }
+            }))
+        }
+
+        if (existingHeader.docs.length > 0) {
+            await payload.update({
+                collection: 'header',
+                id: existingHeader.docs[0].id,
+                data: headerData
+            })
+        } else {
+            await payload.create({
+                collection: 'header',
+                data: headerData
+            })
+        }
+    }
+
+    if (plan.footer) {
+        const existingFooter = await payload.find({
+            collection: 'footer',
+            where: {
+                language: { equals: lang }
+            },
+            limit: 1
+        })
+
+        const footerData = {
+            language: lang,
+            translation_group_id: translationGroupIdFooter,
+            navItems: plan.footer.navItems.map((item: any) => ({
+                link: {
+                    type: 'custom',
+                    label: item.label,
+                    url: item.url,
+                }
+            }))
+        }
+
+        if (existingFooter.docs.length > 0) {
+            await payload.update({
+                collection: 'footer',
+                id: existingFooter.docs[0].id,
+                data: footerData
+            })
+        } else {
+            await payload.create({
+                collection: 'footer',
+                data: footerData
+            })
+        }
+    }
+
     const allPlannedSlugs = plan.pages.map((p: any) => p.slug)
     for(const p of plan.pages){
         console.log(`[AI Orchestartor] Creating child job for page ${p.slug}`)
