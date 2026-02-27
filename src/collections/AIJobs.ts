@@ -29,6 +29,7 @@ export const AIJobs: CollectionConfig = {
                 { label: 'Bulk Keyword Generation', value: 'BULK_KEYWORD_GENERATION' },
                 { label: 'Generate Keyword Article', value: 'GENERATE_KEYWORD_ARTICLE' },
                 { label: 'Agent Sync', value: 'AGENT_SYNC' },
+                { label: 'Industry News Automation', value: 'INDUSTRY_NEWS_AUTOMATION' },
             ],
         },
         {

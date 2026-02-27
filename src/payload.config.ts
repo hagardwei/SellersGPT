@@ -21,10 +21,12 @@ import { BulkKeyWordUploads } from './collections/BulkKeyWordUploads'
 import { Leads } from "./collections/Leads"
 import { ChatbotSettings } from './globals/ChatbotSettings/config'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
+import { NewsRaw } from './collections/NewRaw'
+import { IndustryNewsSettings } from './globals/IndustryNewsSettings/config'
+import { newsAutomationTask } from './tasks/newsAutomation'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-console.log("SMTP_HOST:", process.env.SMTP_HOST)
 
 export default buildConfig({
   admin: {
@@ -70,9 +72,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads, Leads],
+  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads, Leads, NewsRaw],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [WebsiteInfo, ChatbotSettings],
+  globals: [WebsiteInfo, ChatbotSettings, IndustryNewsSettings],
   
   email: nodemailerAdapter({
     defaultFromAddress: 'info@payloadcms.com',
@@ -94,21 +96,28 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   jobs: {
-    access: {
-      run: ({ req }: { req: PayloadRequest }): boolean => {
-        // Allow logged in users to execute this endpoint (default)
-        if (req.user) return true
+    // access: {
+    //   run: ({ req }: { req: PayloadRequest }): boolean => {
+    //     // Allow logged in users to execute this endpoint (default)
+    //     if (req.user) return true
 
-        const secret = process.env.CRON_SECRET
-        if (!secret) return false
+    //     const secret = process.env.CRON_SECRET
+    //     if (!secret) return false
 
-        // If there is no logged in user, then check
-        // for the Vercel Cron secret to be present as an
-        // Authorization header:
-        const authHeader = req.headers.get('authorization')
-        return authHeader === `Bearer ${secret}`
+    //     // If there is no logged in user, then check
+    //     // for the Vercel Cron secret to be present as an
+    //     // Authorization header:
+    //     const authHeader = req.headers.get('authorization')
+    //     return authHeader === `Bearer ${secret}`
+    //   },
+    // },
+
+    tasks: [newsAutomationTask],
+    autoRun: [
+      {
+        cron: '* * * * *', // Poll every minute
+        allQueues: true,
       },
-    },
-    tasks: [],
+    ],
   },
 })

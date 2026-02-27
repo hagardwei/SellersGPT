@@ -4,6 +4,7 @@ import { aiJobQueue } from "@/lib/redis";
 export const triggerAgentSync: CollectionAfterChangeHook = async ({
     doc,
     req: { payload },
+    collection
 }) => {
     // Spawn translation jobs
         console.log(`[Agent Sync] Creating AGENT_SYNC job for doc ${doc}`);
@@ -16,8 +17,8 @@ export const triggerAgentSync: CollectionAfterChangeHook = async ({
                     status: 'pending',
                     input_payload: {
                         sourceId: doc.id,
-                        collection: 'pages',
-                        sourceType: 'page'
+                        collection: collection.slug,
+                        sourceType: collection.slug === 'posts' ? 'post' : 'page'
                     }
                 }
             });

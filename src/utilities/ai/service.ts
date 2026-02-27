@@ -104,8 +104,8 @@ export class OpenAIService implements AIModelService {
  * Factory to get the configured AI implementation.
  */
 export const getAIService = (): AIModelService => {
-    if(process.env.DO_AGENT_WORKSPACE_API_URL && process.env.DO_AGENT_WORKSPACE_TOKEN){
-        return new DOAgentService()
-    }
+    // if(process.env.DO_AGENT_WORKSPACE_API_URL && process.env.DO_AGENT_WORKSPACE_TOKEN){
+    //     return new DOAgentService()
+    // }
     return new OpenAIService()
 }

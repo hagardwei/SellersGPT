@@ -17,6 +17,7 @@ import { handleRegeneratePage } from './handlers/regeneratePage'
 import { handleTranslateDocument } from './handlers/translateDocument'
 import { handleBulkKeyword } from './handlers/bulkKeyWord'
 import { handleAgentSync } from './handlers/agentSync'
+import { handleNewsAutomation } from './handlers/newsAutomation'
 
 
  const MAX_REVIEW_RETRIES = 2
@@ -77,6 +78,9 @@ export const runAIJob = async (jobId: string | number): Promise<void> => {
         await handleAgentSync(jobId, job, payload);
         break;
 
+      case 'INDUSTRY_NEWS_AUTOMATION':
+        await handleNewsAutomation(jobId, job, payload);
+        break
       default:
         throw new Error(`Unknown job type: ${job.type}`)
     }
