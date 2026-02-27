@@ -36,7 +36,7 @@ export const Chatbot: React.FC = () => {
         setInput('')
         console.log("__________: ", newMessages)
         try {
-            const response = await fetch('https://mumq5yapoa4pg7n434mig6xq.agents.do-ai.run/api/v1/chat/completions', {
+            const response = await fetch('https://gg6avd6ii5qexvdgqrz3nr6b.agents.do-ai.run/api/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer Q_rsD94PZ-cPd85W34j_A9OFix8FBIOF` },
                 body: JSON.stringify({
