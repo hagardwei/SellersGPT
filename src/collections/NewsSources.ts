@@ -1,5 +1,5 @@
 // cms/collections/NewsSources.ts
-import { CollectionConfig } from 'payload/types';
+import type { CollectionConfig } from 'payload'
 
 export const NewsSources: CollectionConfig = {
   slug: 'news-sources',

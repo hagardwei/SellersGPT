@@ -5,7 +5,7 @@ import RichText from '@/components/RichText'
 import { Card } from '@/components/Card'
 import type { Post, RelatedPostsBlock as RelatedPostsProps } from '@/payload-types'
 
-export const RelatedPosts: React.FC<RelatedPostsProps> = async (props) => {
+export const RelatedPosts = async (props: any) => {
   const { introContent, title, limit = 3 } = props
 
   const payload = await getPayload({ config: configPromise })

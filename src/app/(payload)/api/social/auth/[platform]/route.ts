@@ -5,9 +5,9 @@ import { saveSocialToken } from '@/utilities/social/service'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { platform: string } }
+  context: { params: Promise<{ platform: string }> }
 ) {
-  const { platform } = params
+  const { platform } = await context.params
   const searchParams = req.nextUrl.searchParams
 
 
