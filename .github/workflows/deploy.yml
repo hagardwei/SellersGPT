@@ -40,6 +40,9 @@ jobs:
               apt-get install -y nodejs
             fi
 
+            git fetch origin main
+            git reset --hard origin/main
+
             echo 'Installing dependencies...'
             npm install
 
