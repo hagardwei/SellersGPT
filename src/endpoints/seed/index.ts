@@ -18,9 +18,11 @@ const collections: CollectionSlug[] = [
   'forms',
   'form-submissions',
   'search',
+  'header',
+  'footer',
 ]
 
-const globals: GlobalSlug[] = ['header', 'footer']
+const globals: GlobalSlug[] = ['website-info']
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
 
@@ -45,7 +47,7 @@ export const seed = async ({
 
   // clear the database
   await Promise.all(
-    globals.map((global) =>
+    globals.map((global: any) =>
       payload.updateGlobal({
         slug: global,
         data: {
@@ -65,7 +67,7 @@ export const seed = async ({
 
   await Promise.all(
     collections
-      .filter((collection) => Boolean(payload.collections[collection].config.versions))
+      .filter((collection) => Boolean(payload.collections[collection]?.config?.versions))
       .map((collection) => payload.db.deleteVersions({ collection, req, where: {} })),
   )
 
@@ -101,11 +103,7 @@ export const seed = async ({
   const [demoAuthor, image1Doc, image2Doc, image3Doc, imageHomeDoc] = await Promise.all([
     payload.create({
       collection: 'users',
-      data: {
-        name: 'Demo Author',
-        email: 'demo-author@example.com',
-        password: 'password',
-      },
+      data: { name: 'Demo Author', email: 'demo-author@example.com', password: 'password', role: 'admin' },
     }),
     payload.create({
       collection: 'media',
@@ -127,15 +125,17 @@ export const seed = async ({
       data: imageHero1,
       file: hero1Buffer,
     }),
-    categories.map((category) =>
+    Promise.all(categories.map((category) =>
       payload.create({
         collection: 'categories',
         data: {
           title: category,
           slug: category,
+          language: 'en',
+          translation_group_id: `category-${category.toLowerCase()}`,
         },
       }),
-    ),
+    )),
   ])
 
   payload.logger.info(`— Seeding posts...`)
@@ -215,12 +215,14 @@ export const seed = async ({
     }),
   ])
 
-  payload.logger.info(`— Seeding globals...`)
+  payload.logger.info(`— Seeding collections (header, footer)...`)
 
-  await Promise.all([
-    payload.updateGlobal({
-      slug: 'header',
+  const [headerDoc, footerDoc] = await Promise.all([
+    payload.create({
+      collection: 'header',
       data: {
+        language: 'en',
+        translation_group_id: 'header-group',
         navItems: [
           {
             link: {
@@ -242,9 +244,11 @@ export const seed = async ({
         ],
       },
     }),
-    payload.updateGlobal({
-      slug: 'footer',
+    payload.create({
+      collection: 'footer',
       data: {
+        language: 'en',
+        translation_group_id: 'footer-group',
         navItems: [
           {
             link: {

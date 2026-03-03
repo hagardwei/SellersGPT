@@ -14,11 +14,11 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml* yarn.lock* package-lock.json* ./
 
 RUN \
-  if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
+elif [ -f package-lock.json ]; then npm ci --legacy-peer-deps; \
+elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
+else echo "Lockfile not found." && exit 1; \
+fi
 
 # ---------------------------
 # Builder stage
@@ -32,11 +32,11 @@ ENV NODE_ENV=production
 
 # Run Payload type generation, then Next.js build
 RUN \
-  if [ -f yarn.lock ]; then yarn run generate:types && yarn run build; \
-  elif [ -f package-lock.json ]; then npm run generate:types && npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run generate:types && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+if [ -f yarn.lock ]; then yarn run generate:types && yarn run build; \
+elif [ -f package-lock.json ]; then npm run generate:types && npm run build; \
+elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run generate:types && pnpm run build; \
+else echo "Lockfile not found." && exit 1; \
+fi
 
 # ---------------------------
 # Runner stage
@@ -47,7 +47,7 @@ ENV NODE_ENV=production
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 nextjs
+&& adduser --system --uid 1001 nextjs
 
 # Copy necessary files
 COPY --from=builder /app/public ./public
