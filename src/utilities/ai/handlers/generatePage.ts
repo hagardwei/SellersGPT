@@ -216,6 +216,34 @@ export const handleGeneratePage = async (jobId: any, job: any, payload: any) => 
                 completed_at: new Date().toISOString(),
             }
         })
-    }
 
+        // TRIGGER SOCIAL MEDIA AUTOMATION
+        if(input.triggerSocial) {
+            console.log(`[AI Orchestrator] Triggering social automation for page: ${resultPage.id}`)
+            const { generateSocialSnippets } =  await import('../../social/generateSocialPost')
+
+            const contentText = pageData.layout
+                .filter((b: any) => b.blockType === 'content')
+                .map((b: any) => b.columns?.[0]?.richText)
+                .join(' ')
+                .substring(0, 3000)
+
+            const snippets = await generateSocialSnippets(contentText, resultPage.title, websiteInfo)
+
+            for(const snippet of snippets) {
+                await payload.create({
+                    collection: 'social-posts',
+                    data: {
+                        content: snippet.content,
+                        platform: snippet.platform,
+                        status: 'scheduled',
+                        source: {
+                            relationTo: 'pages',
+                            value: resultPage.id
+                        }
+                    }
+                })
+            }
+        }
+    }
 }

@@ -5,8 +5,8 @@ import { toLexical } from "../ai/lexicalConverter";
 
 import crypto from 'crypto';
 import { newsRewritePrompt } from "../ai/prompts/newsRewritePrompt";
-import { triggerSocialPublish } from "../social/publisher";
 import { aiJobQueue } from "@/lib/redis";
+import { publishSocialPosts } from "../social/publisher";
 
 export async function processRawNews(payload: BasePayload) {
      console.log('[News Processor] Starting news processing...');
@@ -87,8 +87,32 @@ export async function processRawNews(payload: BasePayload) {
                     });
                 console.log(`[News Processor] Post created: ${post.title} (ID: ${post.id})`);
                 
-                // 5. Build Meta Context for further triggers
-                await triggerSocialPublish(post.id, 'posts', payload)
+                // 5. Generate and Schedule Social Posts
+                try {
+                    const { generateSocialSnippets } = await import('../social/generateSocialPost');
+                    const snippets = await generateSocialSnippets(doc.content, post.title as string, websiteInfo as any);
+                    
+                    for (const snippet of snippets) {
+                        await payload.create({
+                            collection: 'social-posts' as any,
+                            data: {
+                                content: snippet.content,
+                                platform: snippet.platform,
+                                status: 'scheduled',
+                                scheduledAt: new Date().toISOString(), // Publish immediately
+                                source: {
+                                    relationTo: 'news_raw',
+                                    value: doc.id // Use source_id if it exists, else doc.id
+                                }
+                            }
+                        });
+                    }
+                    console.log(`[News Processor] Generated ${snippets.length} social posts for: ${post.title}`);
+                } catch (socialErr) {
+                    console.error('[News Processor] Social snippet generation failed:', socialErr);
+                }
+
+                await publishSocialPosts()
                 await payload.update({
                     collection: 'news_raw' as any,
                     id: doc.id,

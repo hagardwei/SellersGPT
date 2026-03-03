@@ -79,6 +79,8 @@ export interface Config {
     'bulk-keyword-uploads': BulkKeywordUpload;
     leads: Lead;
     news_raw: NewsRaw;
+    'social-posts': SocialPost;
+    'news-sources': NewsSource;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -108,6 +110,8 @@ export interface Config {
     'bulk-keyword-uploads': BulkKeywordUploadsSelect<false> | BulkKeywordUploadsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     news_raw: NewsRawSelect<false> | NewsRawSelect<true>;
+    'social-posts': SocialPostsSelect<false> | SocialPostsSelect<true>;
+    'news-sources': NewsSourcesSelect<false> | NewsSourcesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -142,6 +146,7 @@ export interface Config {
   jobs: {
     tasks: {
       newsAutomation: TaskNewsAutomation;
+      weeklySocialDigest: TaskWeeklySocialDigest;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -455,6 +460,25 @@ export interface User {
   id: number;
   name?: string | null;
   role: 'admin' | 'editor';
+  /**
+   * Manage connected social media accounts for automation.
+   */
+  socialAccounts?:
+    | {
+        platform: 'linkedin' | 'facebook' | 'twitter';
+        /**
+         * Username or display Name on the platform
+         */
+        username?: string | null;
+        providerUserId?: string | null;
+        accessToken?: string | null;
+        refreshToken?: string | null;
+        expiresAt?: string | null;
+        scope?: string | null;
+        isActive?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1470,6 +1494,69 @@ export interface NewsRaw {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-posts".
+ */
+export interface SocialPost {
+  id: number;
+  /**
+   * The text xcontent of the social media post.
+   */
+  content: string;
+  /**
+   * Images or Videos to be included in the post.
+   */
+  media?: (number | Media)[] | null;
+  platform: 'linkedin' | 'facebook' | 'twitter';
+  status: 'draft' | 'scheduled' | 'published' | 'failed';
+  /**
+   * When the post is scheduled to be published.
+   */
+  scheduledAt?: string | null;
+  publishedAt?: string | null;
+  /**
+   * The source content (Article or News) this post was generated from.
+   */
+  source?:
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'news_raw';
+        value: number | NewsRaw;
+      } | null);
+  /**
+   * The post Id on the external platform
+   */
+  externalId?: string | null;
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-sources".
+ */
+export interface NewsSource {
+  id: number;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  title?: string | null;
+  content?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1612,7 +1699,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'newsAutomation' | 'schedulePublish';
+        taskSlug: 'inline' | 'newsAutomation' | 'weeklySocialDigest' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1645,7 +1732,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'newsAutomation' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'newsAutomation' | 'weeklySocialDigest' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -1715,6 +1802,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'news_raw';
         value: number | NewsRaw;
+      } | null)
+    | ({
+        relationTo: 'social-posts';
+        value: number | SocialPost;
+      } | null)
+    | ({
+        relationTo: 'news-sources';
+        value: number | NewsSource;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2410,6 +2505,19 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  socialAccounts?:
+    | T
+    | {
+        platform?: T;
+        username?: T;
+        providerUserId?: T;
+        accessToken?: T;
+        refreshToken?: T;
+        expiresAt?: T;
+        scope?: T;
+        isActive?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2568,6 +2676,36 @@ export interface NewsRawSelect<T extends boolean = true> {
   published_at?: T;
   fetched_at?: T;
   processed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-posts_select".
+ */
+export interface SocialPostsSelect<T extends boolean = true> {
+  content?: T;
+  media?: T;
+  platform?: T;
+  status?: T;
+  scheduledAt?: T;
+  publishedAt?: T;
+  source?: T;
+  externalId?: T;
+  error?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-sources_select".
+ */
+export interface NewsSourcesSelect<T extends boolean = true> {
+  sourceId?: T;
+  sourceUrl?: T;
+  title?: T;
+  content?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3001,6 +3139,14 @@ export interface TaskNewsAutomation {
   input: {
     triggeredBy?: string | null;
   };
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskWeeklySocialDigest".
+ */
+export interface TaskWeeklySocialDigest {
+  input?: unknown;
   output?: unknown;
 }
 /**

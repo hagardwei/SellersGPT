@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
                 keywords,
                 language: 'en',
                 publishImmediately: true,
-                triggerSocial: false,
+                triggerSocial: true,
                 autoTranslate: true
             }
 

@@ -9,6 +9,7 @@ export const Chatbot: React.FC = () => {
     const [showLeadForm, setShowLeadForm] = useState(false)
     const [settings, setSettings] = useState<any>(null)
     const [leadData, setLeadData] = useState({name: '', email: '',company: '', need: '', message: '' })
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -34,25 +35,35 @@ export const Chatbot: React.FC = () => {
         const newMessages: any  = [...messages, userMessage];
         setMessages(newMessages)
         setInput('')
+        setIsLoading(true); // 👈 START LOADER
         console.log("__________: ", newMessages)
         try {
-            const response = await fetch('https://gg6avd6ii5qexvdgqrz3nr6b.agents.do-ai.run/api/v1/chat/completions', {
+            const response = await fetch('https://nmtzf736skvm57zmd4hnesdx.agents.do-ai.run/api/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer Q_rsD94PZ-cPd85W34j_A9OFix8FBIOF` },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer yDTBycmpOsd9bNGb9LY3lWq-wnGu5I9X` },
                 body: JSON.stringify({
                     messages: newMessages
                 })
             })
 
-            if(response.ok) {
+           if(response.ok) {
                 const data = await response.json()
-                setMessages([...newMessages, {role: 'assistant' as const, content: data.reply }])
-                if(data.askForLead){
-                    setShowLeadForm(true)
+
+                const assistantMessage = data?.choices?.[0]?.message?.content
+
+                if (assistantMessage) {
+                    setMessages([
+                        ...newMessages,
+                        { role: 'assistant', content: assistantMessage }
+                    ])
                 }
             }
         } catch (err) {
             console.error('Error sending message:', err)
+            setIsLoading(false); // 👈 STOP LOADER
+
+        } finally {
+            setIsLoading(false); // 👈 STOP LOADER
         }
     }
 
@@ -85,7 +96,7 @@ export const Chatbot: React.FC = () => {
 
             {isOpen && (
                 <div className="chatbot__window">
-                    <div className="chatbot__header">
+                    <div className="chatbot__header bg-dark">
                         <h3>Assistant</h3>
                     </div>
                     <div className="chatbot__messages">
@@ -126,6 +137,15 @@ export const Chatbot: React.FC = () => {
                                 />
                                 <button type="submit">Contact Me</button>
                             </form>
+                        )}
+                        {isLoading && (
+                            <div className="chatbot__message chatbot__message--assistant">
+                                <div className="thinking-loader">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
                         )}
                     </div>
                     <div className="chatbot__input">

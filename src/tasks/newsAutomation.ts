@@ -10,7 +10,9 @@ export const newsAutomationTask: any = {
       defaultValue: 'native-cron',
     },
   ],
-  handler: async ({ payload, input }: any) => {
+  handler: async ({ req, input }: any) => {
+     const { payload } = req
+     
     payload.logger.info('[Task] Triggering Industry News Automation...')
     console.log("+++++ News Automation Task Running +++++")
 

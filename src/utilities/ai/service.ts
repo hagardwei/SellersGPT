@@ -109,3 +109,13 @@ export const getAIService = (): AIModelService => {
     // }
     return new OpenAIService()
 }
+
+export async function generateText(prompt: string, context?: string): Promise<string> {
+    const service = getAIService()
+    const result = await (service as any).generate(prompt)
+    if (result.success) {
+        return result.data
+    }
+    throw new Error(result.error || 'AI generation failed')
+}
+

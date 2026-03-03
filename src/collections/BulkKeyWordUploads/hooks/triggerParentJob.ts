@@ -69,7 +69,7 @@ export const triggerParentJob: CollectionAfterChangeHook = async ({
                     total_keywords: keywords.length,
                     processed_keywords: 0,
                     completion_percentage: 0,
-                    input_payload: { keywords, language: 'en', publishImmediately: true, autoTranslate: true, triggerSocial: false },
+                    input_payload: { keywords, language: 'en', publishImmediately: true, autoTranslate: true, triggerSocial: true },
                     step: 'PENDING',
                     createdAt: new Date().toISOString()
                 },

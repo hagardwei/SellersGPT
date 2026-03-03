@@ -24,16 +24,21 @@ import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { NewsRaw } from './collections/NewRaw'
 import { IndustryNewsSettings } from './globals/IndustryNewsSettings/config'
 import { newsAutomationTask } from './tasks/newsAutomation'
+import { SocialPosts } from './collections/SocialPosts'
+import { NewsSources } from './collections/NewsSources'
+import { weeklySocialDigestTask } from './tasks/weeklySocialDigest'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
   admin: {
+    autoRefresh: true,
     components: {
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeLogin: ['@/components/BeforeLogin'],
+      
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/OnboardingForm'],
@@ -72,7 +77,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads, Leads, NewsRaw],
+  collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads, Leads, NewsRaw, SocialPosts, NewsSources],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [WebsiteInfo, ChatbotSettings, IndustryNewsSettings],
   
@@ -96,27 +101,10 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   jobs: {
-    // access: {
-    //   run: ({ req }: { req: PayloadRequest }): boolean => {
-    //     // Allow logged in users to execute this endpoint (default)
-    //     if (req.user) return true
-
-    //     const secret = process.env.CRON_SECRET
-    //     if (!secret) return false
-
-    //     // If there is no logged in user, then check
-    //     // for the Vercel Cron secret to be present as an
-    //     // Authorization header:
-    //     const authHeader = req.headers.get('authorization')
-    //     return authHeader === `Bearer ${secret}`
-    //   },
-    // },
-
-    tasks: [newsAutomationTask],
+    tasks: [newsAutomationTask, weeklySocialDigestTask],
     autoRun: [
       {
-        cron: '* * * * *', // Poll every minute
-        allQueues: true,
+        cron: '*/5 * * * *', // Check for scheduled tasks every 5 minutes
       },
     ],
   },
