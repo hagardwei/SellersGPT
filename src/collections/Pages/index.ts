@@ -17,6 +17,8 @@ import { FAQBlock } from '../../blocks/FAQ/config'
 import { TimelineBlock } from '../../blocks/Timeline/config'
 import { GalleryBlock } from '../../blocks/Gallery/config'
 import { VideoBlock } from '../../blocks/Video/config'
+import { TableOfContents } from '../../blocks/TableOfContents/config'
+import { RelatedPosts } from '../../blocks/RelatedPosts/config'
 import { hero } from '../../heros/config'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
@@ -28,6 +30,7 @@ import { cloneTranslationHandler } from '../../utilities/cloneTranslation'
 import { syncGroupSlug } from '../../utilities/syncGroupSlug'
 import { validateUniqueGroupLanguage } from '../../utilities/validateUniqueGroupLanguage'
 import { deleteGroupHandler } from '../../utilities/deleteGroup'
+import { triggerAutomatedTranslations } from './hooks/triggerAutomatedTranslations'
 
 import {
   MetaDescriptionField,
@@ -36,6 +39,37 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
+import { aiJobQueue } from '@/lib/redis'
+import { triggerAgentSync } from './hooks/triggerAgentSync'
+
+/**
+ * Helper to call revalidation route
+ */
+/**
+ * Revalidate a page path for all languages
+ */
+async function revalidatePagePath(path: string, tag?: string) {
+  const languages = ['en','es','de','fr','pt','it','tr','ru','nl']
+
+  for (const lang of languages) {
+    const localizedPath = path === '/' ? `/${lang}` : `/${lang}${path}`
+    try {
+      const url = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/revalidate`
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // secret: process.env.REVALIDATE_SECRET,
+          path: localizedPath,
+          tag,
+        }),
+      })
+    } catch (err) {
+      console.error(`[Revalidate] Failed for path: ${localizedPath}`, err)
+    }
+  }
+}
+
 
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
@@ -112,6 +146,8 @@ export const Pages: CollectionConfig<'pages'> = {
                 TimelineBlock,
                 GalleryBlock,
                 VideoBlock,
+                TableOfContents,
+                RelatedPosts,
               ],
               required: true,
               admin: {
@@ -201,6 +237,14 @@ export const Pages: CollectionConfig<'pages'> = {
         condition: (data) => data?.language === 'en',
       },
     },
+    {
+      name: 'deletedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
   ],
   endpoints: [
     {
@@ -259,23 +303,38 @@ export const Pages: CollectionConfig<'pages'> = {
       },
     },
   ],
-  // endpoints: [
-  //   {
-  //     path: '/:id/clone-to',
-  //     method: 'post',
-  //     handler: cloneTranslationHandler,
-  //   },
-  //   {
-  //     path: '/:id/delete-group',
-  //     method: 'post',
-  //     handler: deleteGroupHandler,
-  //   },
-  // ],
   hooks: {
-    afterChange: [revalidatePage],
+    afterChange: [
+        async ({ doc, previousDoc }) => {
+        // Only revalidate published pages
+        if (doc._status === 'published') {
+          const path = doc.slug === 'home' ? '/' : `/${doc.slug}`
+          await revalidatePagePath(path, 'pages-sitemap')
+        }
+        // If previous doc was published and slug changed
+        if (previousDoc?._status === 'published' && doc._status !== 'published') {
+          const oldPath = previousDoc.slug === 'home' ? '/' : `/${previousDoc.slug}`
+          await revalidatePagePath(oldPath, 'pages-sitemap')
+        }
+      },
+      // triggerAutomatedTranslations,
+      triggerAgentSync
+    ],
     beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
     beforeChange: [populatePublishedAt, getBlockDuplicateSlug('pages'), syncGroupSlug],
-    afterDelete: [revalidateDelete],
+    afterDelete: [
+      // async ({ doc }) => {
+      //   const path = doc?.slug === 'home' ? '/' : `/${doc?.slug}`
+      //   await revalidatePagePath(path, 'pages-sitemap')
+      //   if(doc.status == "published"){
+      //     await aiJobQueue.add("AGENT_SYNC", {
+      //       workspaceId: doc.workspace,
+      //       sourceId: doc.id,
+      //       sourceType: "page"
+      //     })
+      //   }
+      // },
+    ],
   },
   versions: {
     drafts: {

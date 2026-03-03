@@ -7,6 +7,9 @@ export const validateUniqueGroupLanguage: CollectionBeforeValidateHook = async (
     operation,
     collection
 }) => {
+
+  console.log("Data in validate language group:", data)
+  console.log("OriginalDoc in validate language group:", originalDoc)
     const language = data?.language || originalDoc?.language
     const groupId = data?.translation_group_id || originalDoc?.translation_group_id
     const id = originalDoc?.id
@@ -14,20 +17,25 @@ export const validateUniqueGroupLanguage: CollectionBeforeValidateHook = async (
     if (!language || !groupId) return data
     if (!req?.payload) return data
 
+
+  const where: any = {
+    and: [
+      { translation_group_id: { equals: groupId } },
+      { language: { equals: language } },
+    ],
+  }
+
+  // ✅ ONLY exclude current document on UPDATE
+  if (operation === 'update' && originalDoc?.id) {
+    where.and.push({
+      id: { not_equals: originalDoc.id },
+    })
+  }
+
     // Check if another document in the same group already has this language
     const result = await req.payload.find({
-        collection: collection.slug as any,
-        where: {
-            and: [
-                {
-                    translation_group_id: { equals: groupId },
-                },
-                {
-                    language: { equals: language },
-                },
-                ...(id ? [{ id: { not_equals: id } }] : []),
-            ],
-        },
+        collection: (collection?.slug || 'pages') as any,
+        where,
         depth: 0,
         limit: 1,
         pagination: false,

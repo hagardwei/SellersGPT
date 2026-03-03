@@ -75,6 +75,12 @@ export interface Config {
     header: Header;
     footer: Footer;
     'ai-jobs': AiJob;
+    translations: Translation;
+    'bulk-keyword-uploads': BulkKeywordUpload;
+    leads: Lead;
+    news_raw: NewsRaw;
+    'social-posts': SocialPost;
+    'news-sources': NewsSource;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -100,6 +106,12 @@ export interface Config {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'ai-jobs': AiJobsSelect<false> | AiJobsSelect<true>;
+    translations: TranslationsSelect<false> | TranslationsSelect<true>;
+    'bulk-keyword-uploads': BulkKeywordUploadsSelect<false> | BulkKeywordUploadsSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
+    news_raw: NewsRawSelect<false> | NewsRawSelect<true>;
+    'social-posts': SocialPostsSelect<false> | SocialPostsSelect<true>;
+    'news-sources': NewsSourcesSelect<false> | NewsSourcesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -117,9 +129,15 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'website-info': WebsiteInfo;
+    'chatbot-settings': ChatbotSetting;
+    'industry-news-settings': IndustryNewsSetting;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     'website-info': WebsiteInfoSelect<false> | WebsiteInfoSelect<true>;
+    'chatbot-settings': ChatbotSettingsSelect<false> | ChatbotSettingsSelect<true>;
+    'industry-news-settings': IndustryNewsSettingsSelect<false> | IndustryNewsSettingsSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -127,6 +145,8 @@ export interface Config {
   };
   jobs: {
     tasks: {
+      newsAutomation: TaskNewsAutomation;
+      weeklySocialDigest: TaskWeeklySocialDigest;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -177,6 +197,8 @@ export interface Page {
     | TimelineBlock
     | GalleryBlock
     | VideoBlock
+    | TableOfContentsBlock
+    | RelatedPostsBlock
   )[];
   meta?: {
     title?: string | null;
@@ -194,6 +216,7 @@ export interface Page {
   translation_group_id: string;
   hero?: any;
   slug?: string | null;
+  deletedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -438,6 +461,25 @@ export interface User {
   id: number;
   name?: string | null;
   role: 'admin' | 'editor';
+  /**
+   * Manage connected social media accounts for automation.
+   */
+  socialAccounts?:
+    | {
+        platform: 'linkedin' | 'facebook' | 'twitter';
+        /**
+         * Username or display Name on the platform
+         */
+        username?: string | null;
+        providerUserId?: string | null;
+        accessToken?: string | null;
+        refreshToken?: string | null;
+        expiresAt?: string | null;
+        scope?: string | null;
+        isActive?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1119,6 +1161,66 @@ export interface VideoBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableOfContentsBlock".
+ */
+export interface TableOfContentsBlock {
+  heading?: string | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableOfContents';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RelatedPostsBlock".
+ */
+export interface RelatedPostsBlock {
+  title?: string | null;
+  introContent?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  limit?: number | null;
+  settings?: {
+    /**
+     * Unique ID for anchor links (e.g. "features")
+     */
+    blockId?: string | null;
+    theme?: ('light' | 'dark' | 'brand') | null;
+    padding?: {
+      top?: ('none' | 'small' | 'medium' | 'large') | null;
+      bottom?: ('none' | 'small' | 'medium' | 'large') | null;
+    };
+    visibility?: ('both' | 'desktop' | 'mobile') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'relatedPosts';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
  */
 export interface Header {
@@ -1191,7 +1293,15 @@ export interface Footer {
  */
 export interface AiJob {
   id: number;
-  type: 'GENERATE_WEBSITE' | 'GENERATE_PAGE' | 'REGENERATE_PAGE';
+  type:
+    | 'GENERATE_WEBSITE'
+    | 'GENERATE_PAGE'
+    | 'REGENERATE_PAGE'
+    | 'TRANSLATE_DOCUMENT'
+    | 'BULK_KEYWORD_GENERATION'
+    | 'GENERATE_KEYWORD_ARTICLE'
+    | 'AGENT_SYNC'
+    | 'INDUSTRY_NEWS_AUTOMATION';
   status: 'pending' | 'running' | 'completed' | 'failed';
   /**
    * Current execution step (e.g. "INITIALIZATION", "PLANNING")
@@ -1248,10 +1358,202 @@ export interface AiJob {
     | null;
   retry_count?: number | null;
   /**
+   * Content quality score from AI reviewer (0-100)
+   */
+  review_score?: number | null;
+  /**
+   * SEO and content issues found by AI reviewer
+   */
+  review_issues?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Reason for content regeneration retry
+   */
+  retry_reason?: string | null;
+  /**
    * The website job that spawned this page job
    */
   parent_job?: (number | null) | AiJob;
+  target_language?: ('en' | 'es') | null;
+  total_keywords?: number | null;
+  processed_keywords?: number | null;
+  completion_percentage?: number | null;
+  payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   completed_at?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "translations".
+ */
+export interface Translation {
+  id: number;
+  /**
+   * The shared ID that connects all language variants of a document.
+   */
+  translation_group_id: string;
+  source_language: 'en' | 'es' | 'de' | 'fr' | 'pt' | 'it' | 'tr' | 'ru' | 'nl';
+  translations?:
+    | {
+        language: 'en' | 'es' | 'de' | 'fr' | 'pt' | 'it' | 'tr' | 'ru' | 'nl';
+        status: 'pending' | 'translating' | 'completed' | 'failed';
+        /**
+         * The AI job responsible for this translation.
+         */
+        job_id?: (number | null) | AiJob;
+        error?: string | null;
+        completed_at?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  source_hash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bulk-keyword-uploads".
+ */
+export interface BulkKeywordUpload {
+  id: number;
+  file: number | Media;
+  fileName?: string | null;
+  status?: ('pending' | 'processing' | 'completed' | 'failed') | null;
+  totalKeywords?: number | null;
+  processedKeywords?: number | null;
+  parentJobId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  need?: string | null;
+  message?: string | null;
+  /**
+   * The URL where the lead was captured
+   */
+  sourceUrl?: string | null;
+  status?: ('new' | 'contacted' | 'converted' | 'lost') | null;
+  /**
+   * Chat transcript associated with this lead
+   */
+  transcript?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news_raw".
+ */
+export interface NewsRaw {
+  id: number;
+  source: string;
+  external_id: string;
+  title: string;
+  description?: string | null;
+  content?: string | null;
+  url: string;
+  published_at: string;
+  /**
+   * When this article was fetched from APITube
+   */
+  fetched_at: string;
+  processed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-posts".
+ */
+export interface SocialPost {
+  id: number;
+  /**
+   * The text xcontent of the social media post.
+   */
+  content: string;
+  /**
+   * Images or Videos to be included in the post.
+   */
+  media?: (number | Media)[] | null;
+  platform: 'linkedin' | 'facebook' | 'twitter';
+  status: 'draft' | 'scheduled' | 'published' | 'failed';
+  /**
+   * When the post is scheduled to be published.
+   */
+  scheduledAt?: string | null;
+  publishedAt?: string | null;
+  /**
+   * The source content (Article or News) this post was generated from.
+   */
+  source?:
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'news_raw';
+        value: number | NewsRaw;
+      } | null);
+  /**
+   * The post Id on the external platform
+   */
+  externalId?: string | null;
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-sources".
+ */
+export interface NewsSource {
+  id: number;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  title?: string | null;
+  content?: string | null;
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1399,7 +1701,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug: 'inline' | 'newsAutomation' | 'weeklySocialDigest' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1432,10 +1734,19 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'newsAutomation' | 'weeklySocialDigest' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1477,6 +1788,30 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'ai-jobs';
         value: number | AiJob;
+      } | null)
+    | ({
+        relationTo: 'translations';
+        value: number | Translation;
+      } | null)
+    | ({
+        relationTo: 'bulk-keyword-uploads';
+        value: number | BulkKeywordUpload;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'news_raw';
+        value: number | NewsRaw;
+      } | null)
+    | ({
+        relationTo: 'social-posts';
+        value: number | SocialPost;
+      } | null)
+    | ({
+        relationTo: 'news-sources';
+        value: number | NewsSource;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1564,6 +1899,8 @@ export interface PagesSelect<T extends boolean = true> {
         timeline?: T | TimelineBlockSelect<T>;
         gallery?: T | GalleryBlockSelect<T>;
         video?: T | VideoBlockSelect<T>;
+        tableOfContents?: T | TableOfContentsBlockSelect<T>;
+        relatedPosts?: T | RelatedPostsBlockSelect<T>;
       };
   meta?:
     | T
@@ -1576,6 +1913,7 @@ export interface PagesSelect<T extends boolean = true> {
   language?: T;
   translation_group_id?: T;
   slug?: T;
+  deletedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1971,6 +2309,52 @@ export interface VideoBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableOfContentsBlock_select".
+ */
+export interface TableOfContentsBlockSelect<T extends boolean = true> {
+  heading?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RelatedPostsBlock_select".
+ */
+export interface RelatedPostsBlockSelect<T extends boolean = true> {
+  title?: T;
+  introContent?: T;
+  limit?: T;
+  settings?:
+    | T
+    | {
+        blockId?: T;
+        theme?: T;
+        padding?:
+          | T
+          | {
+              top?: T;
+              bottom?: T;
+            };
+        visibility?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
@@ -2123,6 +2507,19 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  socialAccounts?:
+    | T
+    | {
+        platform?: T;
+        username?: T;
+        providerUserId?: T;
+        accessToken?: T;
+        refreshToken?: T;
+        expiresAt?: T;
+        scope?: T;
+        isActive?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2202,8 +2599,115 @@ export interface AiJobsSelect<T extends boolean = true> {
   error?: T;
   skipped_blocks?: T;
   retry_count?: T;
+  review_score?: T;
+  review_issues?: T;
+  retry_reason?: T;
   parent_job?: T;
+  target_language?: T;
+  total_keywords?: T;
+  processed_keywords?: T;
+  completion_percentage?: T;
+  payload?: T;
   completed_at?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "translations_select".
+ */
+export interface TranslationsSelect<T extends boolean = true> {
+  translation_group_id?: T;
+  source_language?: T;
+  translations?:
+    | T
+    | {
+        language?: T;
+        status?: T;
+        job_id?: T;
+        error?: T;
+        completed_at?: T;
+        id?: T;
+      };
+  source_hash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bulk-keyword-uploads_select".
+ */
+export interface BulkKeywordUploadsSelect<T extends boolean = true> {
+  file?: T;
+  fileName?: T;
+  status?: T;
+  totalKeywords?: T;
+  processedKeywords?: T;
+  parentJobId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  company?: T;
+  need?: T;
+  message?: T;
+  sourceUrl?: T;
+  status?: T;
+  transcript?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news_raw_select".
+ */
+export interface NewsRawSelect<T extends boolean = true> {
+  source?: T;
+  external_id?: T;
+  title?: T;
+  description?: T;
+  content?: T;
+  url?: T;
+  published_at?: T;
+  fetched_at?: T;
+  processed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "social-posts_select".
+ */
+export interface SocialPostsSelect<T extends boolean = true> {
+  content?: T;
+  media?: T;
+  platform?: T;
+  status?: T;
+  scheduledAt?: T;
+  publishedAt?: T;
+  source?: T;
+  externalId?: T;
+  error?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-sources_select".
+ */
+export interface NewsSourcesSelect<T extends boolean = true> {
+  sourceId?: T;
+  sourceUrl?: T;
+  title?: T;
+  content?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2436,6 +2940,7 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   queue?: T;
   waitUntil?: T;
   processing?: T;
+  meta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2503,6 +3008,72 @@ export interface WebsiteInfo {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chatbot-settings".
+ */
+export interface ChatbotSetting {
+  id: number;
+  enabled?: boolean | null;
+  welcomeMessage?: string | null;
+  /**
+   * Link to your Calendly page for scheduling meetings
+   */
+  calendlyLink?: string | null;
+  emailNotifications?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industry-news-settings".
+ */
+export interface IndustryNewsSetting {
+  id: number;
+  enabled?: boolean | null;
+  /**
+   * API key for fetching news from APITube
+   */
+  apiTubeKey?: string | null;
+  searchQueries?:
+    | {
+        query: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Maximum number of news articles to fetch and process each day
+   */
+  dailyCap?: number | null;
+  /**
+   * Category to assign to news posts
+   */
+  targetCategory?: (number | null) | Category;
+  /**
+   * Threshold for de-duplication (0.0 to 1.0)
+   */
+  similarityThreshold?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: number;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "website-info_select".
  */
 export interface WebsiteInfoSelect<T extends boolean = true> {
@@ -2518,6 +3089,67 @@ export interface WebsiteInfoSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chatbot-settings_select".
+ */
+export interface ChatbotSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  welcomeMessage?: T;
+  calendlyLink?: T;
+  emailNotifications?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industry-news-settings_select".
+ */
+export interface IndustryNewsSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  apiTubeKey?: T;
+  searchQueries?:
+    | T
+    | {
+        query?: T;
+        id?: T;
+      };
+  dailyCap?: T;
+  targetCategory?: T;
+  similarityThreshold?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskNewsAutomation".
+ */
+export interface TaskNewsAutomation {
+  input: {
+    triggeredBy?: string | null;
+  };
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskWeeklySocialDigest".
+ */
+export interface TaskWeeklySocialDigest {
+  input?: unknown;
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

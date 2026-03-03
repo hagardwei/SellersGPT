@@ -40,7 +40,6 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
 
     const handleLanguageChange = (newLang: string) => {
         if (newLang === currentLang) return
-
         const newSegments = [...segments]
         newSegments[1] = newLang
         const newPath = newSegments.join('/') || '/'

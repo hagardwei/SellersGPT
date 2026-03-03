@@ -22,7 +22,6 @@ export const Categories: CollectionConfig = {
     useAsTitle: 'title',
     baseListFilter: () => ({
       language: {
-        equals: 'en',
       },
     }),
   },

@@ -6,19 +6,30 @@ import { AllBlocks } from './blockReference'
 /**
  * Recursively removes any keys with explicit null values from an object or array.
  * Payload CMS sometimes chokes on null for group fields, preferring undefined/missing keys.
+ * Also strips database-specific fields like 'id' and '_uuid' to allow cloning/translating.
  */
-export function recursiveCleanNulls(data: any): any {
+export function recursiveCleanNulls(data: any, stripIds: boolean = false): any {
+    // If it's a populated media object (contains id and url), convert to ID
+    if (data && typeof data === 'object' && !Array.isArray(data) && data.id && (data.url || data.filename)) {
+        return data.id
+    }
+
     if (Array.isArray(data)) {
         return data
-            .map(item => recursiveCleanNulls(item))
-            .filter(item => item !== undefined && item !== null) // Remove both undefined and null
+            .map(item => recursiveCleanNulls(item, stripIds))
+            .filter(item => item !== undefined && item !== null)
     }
     if (typeof data === 'object' && data !== null) {
         const cleaned: any = {}
         for (const key in data) {
+            // Strip database-internal fields if requested
+            if (stripIds && ['id', '_uuid', 'createdAt', 'updatedAt', 'blockName'].includes(key)) {
+                continue
+            }
+
             const value = data[key]
-            if (value !== undefined && value !== null) { // Remove both undefined and null
-                cleaned[key] = recursiveCleanNulls(value)
+            if (value !== undefined && value !== null) {
+                cleaned[key] = recursiveCleanNulls(value, stripIds)
             }
         }
         return cleaned
@@ -239,9 +250,9 @@ async function createFormFromAI(block: any, payload: Payload): Promise<string | 
 
             return field
         }) : [
-            { blockType: 'text', name: 'full_name', label: 'Full Name', required: true },
-            { blockType: 'email', name: 'email', label: 'Email Address', required: true },
-            { blockType: 'textarea', name: 'message', label: 'Message', required: true }
+            {  blockType: 'text', name: 'full_name', label: 'Full Name', required: true },
+            {  blockType: 'email', name: 'email', label: 'Email Address', required: true },
+            {  blockType: 'textarea', name: 'message', label: 'Message', required: true }
         ]
 
         const newForm = await payload.create({
@@ -350,6 +361,7 @@ function validateBlock(block: any): { valid: boolean; error?: string } {
     return { valid: true }
 }
 
+
 /**
  * Recursively processes the layout blocks to handle media, links, and rich text.
  * Now returns both the processed layout and any validation/processing errors.
@@ -366,7 +378,9 @@ export async function postProcessLayout(
     const processedLayout: any[] = []
 
     // 1. Initial clean of the whole layout
-    const cleanedLayout = recursiveCleanNulls(layout)
+    // We strip IDs because if this is a translation or regeneration, 
+    // we want to create NEW blocks, not update existing ones by ID.
+    const cleanedLayout = recursiveCleanNulls(layout, true)
 
     for (let i = 0; i < cleanedLayout.length; i++) {
         const block = cleanedLayout[i]
@@ -386,7 +400,9 @@ export async function postProcessLayout(
 
             // 3. Strip unknown fields and prepare newBlock
             const schema = AllBlocks.find(s => s.slug === block.blockType)!
-            const newBlock: any = { blockType: block.blockType }
+            const newBlock: any = { 
+                blockType: block.blockType,
+            }
 
             // Only copy fields defined in the schema
             for (const fieldName in schema.fields) {
@@ -419,7 +435,13 @@ export async function postProcessLayout(
             const mediaFields = ['media', 'icon', 'logo', 'image']
             for (const field of mediaFields) {
                 if (newBlock[field] && typeof newBlock[field] === 'string' && newBlock[field].startsWith('http')) {
-                    newBlock[field] = await uploadMedia(newBlock[field], payload)
+                    const mediaId = await uploadMedia(newBlock[field], payload)
+
+                    if (mediaId) {
+                        newBlock[field] = mediaId // Assign ID directly, no wrapping
+                    } else {
+                        newBlock[field] = undefined // Remove failed URL to prevent Drizzle crash
+                    }
                 }
             }
 
@@ -466,7 +488,9 @@ export async function postProcessLayout(
                     const items = await Promise.all(
                         newBlock[key].map(async (item: any) => {
                             if (typeof item === 'object' && item !== null) {
-                                const newItem = { ...item }
+                                const newItem = { 
+                                    ...item,
+                                }
 
                                 if (newItem.links && Array.isArray(newItem.links)) {
                                     newItem.links = await transformLinks(newItem.links, payload)
@@ -481,7 +505,13 @@ export async function postProcessLayout(
                                         typeof newItem[field] === 'string' &&
                                         newItem[field].startsWith('http')
                                     ) {
-                                        newItem[field] = await uploadMedia(newItem[field], payload)
+                                        const mediaId = await uploadMedia(newItem[field], payload)
+
+                                        if (mediaId) {
+                                            newItem[field] = mediaId // Assign ID directly
+                                        } else {
+                                            newItem[field] = undefined // Remove failed URL
+                                        }
                                     }
                                 }
 

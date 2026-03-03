@@ -17,6 +17,8 @@ import { FAQBlock } from '@/blocks/FAQ/Component'
 import { TimelineBlock } from '@/blocks/Timeline/Component'
 import { GalleryBlock } from '@/blocks/Gallery/Component'
 import { VideoBlock } from '@/blocks/Video/Component'
+import { TableOfContentsBlock } from '@/blocks/TableOfContents/Component'
+import { RelatedPosts } from '@/blocks/RelatedPosts/Component'
 
 const blockComponents = {
   hero: HeroBlock,
@@ -34,6 +36,8 @@ const blockComponents = {
   timeline: TimelineBlock,
   gallery: GalleryBlock,
   video: VideoBlock,
+  tableOfContents: TableOfContentsBlock,
+  relatedPosts: RelatedPosts,
 }
 
 export const RenderBlocks: React.FC<{

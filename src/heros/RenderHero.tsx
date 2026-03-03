@@ -1,6 +1,6 @@
 import React from 'react'
 
-import type { Page } from '@/payload-types'
+import type { Page, HeroBlock } from '@/payload-types'
 
 import { HighImpactHero } from '@/heros/HighImpact'
 import { LowImpactHero } from '@/heros/LowImpact'
@@ -12,14 +12,12 @@ const heroes = {
   mediumImpact: MediumImpactHero,
 }
 
-type HeroType = keyof typeof heroes // 'highImpact' | 'lowImpact' | 'mediumImpact'
+export const RenderHero: React.FC<HeroBlock> = (props) => {
+  const { variant: type } = props || {}
 
-export const RenderHero: React.FC<Page['hero']> = (props) => {
-  const { type } = props || {}
+  if (!type) return null
 
-  if (!type || type === 'none') return null
-
-  const HeroToRender = heroes[type as HeroType]
+  const HeroToRender = (heroes as any)[type === 'split' ? 'highImpact' : type === 'media' ? 'mediumImpact' : 'lowImpact']
 
   if (!HeroToRender) return null
 

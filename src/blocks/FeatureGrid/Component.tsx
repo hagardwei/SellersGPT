@@ -57,8 +57,8 @@ export const FeatureGridBlock: React.FC<FeatureGridProps> = (props) => {
                         {items.map((item, index) => (
                             <div key={index} className="flex flex-col items-start p-6 rounded-xl border border-border/20 bg-background/5 backdrop-blur-sm">
                                 {item.icon && (
-                                    <div className="mb-6 w-12 h-12 flex items-center justify-center rounded-lg bg-primary/10">
-                                        <Media resource={item.icon} className="w-6 h-6 object-contain" />
+                                    <div className="mb-6 flex items-center justify-center rounded-lg bg-primary/10">
+                                        <Media resource={item.icon} />
                                     </div>
                                 )}
                                 <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
