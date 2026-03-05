@@ -54,11 +54,6 @@ jobs:
             echo 'Testing DB connection...'
             psql 'postgresql://${{ secrets.DATABASE_USER }}:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DATABASE_NAME }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt' -c '\conninfo'
 
-            if [ -d "./src/migrations" ]; then
-              echo "Running migrations..."
-              NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx payload migrate
-            fi
-
             echo 'Building Next.js...'
             NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx next build
 
