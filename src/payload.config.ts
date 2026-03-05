@@ -30,6 +30,8 @@ import { weeklySocialDigestTask } from './tasks/weeklySocialDigest'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+  const disableEmail = process.env.PAYLOAD_DISABLE_EMAIL === 'true'
+
 
 export default buildConfig({
   admin: {
@@ -75,16 +77,13 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl: false,
     },
   }),
   collections: [Pages, Posts, Media, Categories, Users, Header, Footer, AIJobs, Translations, BulkKeyWordUploads, Leads, NewsRaw, SocialPosts, NewsSources],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [WebsiteInfo, ChatbotSettings, IndustryNewsSettings],
-  
-  email: process.env.SMTP_HOST
+  email: !disableEmail
   ? nodemailerAdapter({
       defaultFromAddress: 'info@payloadcms.com',
       defaultFromName: 'Payload',
