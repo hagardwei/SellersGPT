@@ -14,84 +14,70 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH
+      - name: Set up SSH keys
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 178.128.64.173 >> ~/.ssh/known_hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy Application
+      - name: Upload PostgreSQL certificate to Droplet
         run: |
-          ssh -i ~/.ssh/id_ed25519 root@178.128.64.173 << 'EOF'
-          set -e
+          echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt
 
-          echo "Starting deployment..."
+      - name: Deploy to Droplet
+        run: |
+          ssh -i ~/.ssh/id_ed25519 root@178.128.64.173 "
+            set -e
 
-          cd /root/sellerapp/SellersGPT
+            cd /root/sellerapp/SellersGPT
 
-          echo "Checking Node.js..."
-          if ! command -v node >/dev/null || [ $(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]; then
-            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-            apt-get install -y nodejs
-          fi
+            echo 'Installing Node.js if needed...'
+            if ! command -v node >/dev/null || [ \$(node -v | cut -d. -f1 | tr -d 'v') -lt 20 ]; then
+              curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+              apt-get install -y nodejs
+            fi
 
-          echo "Pulling latest code..."
-          git fetch origin main
-          git reset --hard origin/main
+            git fetch origin main
+            git reset --hard origin/main
 
-          echo "Installing dependencies..."
-          npm ci
+            echo 'Installing dependencies...'
+            npm install
 
-          echo "Cleaning previous build..."
-          rm -rf .next
+            echo 'Writing postgres certificate...'
+            echo '${{ secrets.POSTGRES_SSL_CERT }}' > postgres_cert.crt
+            chmod 600 postgres_cert.crt
 
-          echo "Writing PostgreSQL SSL certificate..."
-          echo "${{ secrets.POSTGRES_SSL_CERT }}" > postgres_cert.crt
-          chmod 600 postgres_cert.crt
+            echo 'Creating .env.production...'
+            printf 'DATABASE_URL=postgresql://%s:%s@%s:%s/%s?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt\n' \
+              '${{ secrets.DATABASE_USER }}' \
+              '${{ secrets.DATABASE_PASSWORD }}' \
+              '${{ secrets.DB_HOST }}' \
+              '${{ secrets.DB_PORT }}' \
+              '${{ secrets.DATABASE_NAME }}' \
+              > .env.production
 
-          echo "Creating production environment file..."
+            printf 'PAYLOAD_SECRET=%s\n' '${{ secrets.PAYLOAD_SECRET }}' >> .env.production
+            printf 'NODE_ENV=production\n' >> .env.production
 
-          printf "DATABASE_URL=postgresql://%s:%s@%s:%s/%s?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt\n" \
-          "${{ secrets.DATABASE_USER }}" \
-          "${{ secrets.DATABASE_PASSWORD }}" \
-          "${{ secrets.DB_HOST }}" \
-          "${{ secrets.DB_PORT }}" \
-          "${{ secrets.DATABASE_NAME }}" \
-          > .env.production
+            echo 'Testing DB connection...'
+            psql 'postgresql://${{ secrets.DATABASE_USER }}:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DATABASE_NAME }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt' -c '\conninfo'
 
-          printf "PAYLOAD_SECRET=%s\n" "${{ secrets.PAYLOAD_SECRET }}" >> .env.production
-          printf "SMTP_HOST=%s\n" "${{ secrets.SMTP_HOST }}" >> .env.production
-          printf "SMTP_USER=%s\n" "${{ secrets.SMTP_USER }}" >> .env.production
-          printf "SMTP_PASS=%s\n" "${{ secrets.SMTP_PASS }}" >> .env.production
-          printf "NODE_ENV=production\n" >> .env.production
 
-          echo "Testing PostgreSQL connection..."
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql \
-            -h ${{ secrets.DB_HOST }} \
-            -U ${{ secrets.DATABASE_USER }} \
-            -d ${{ secrets.DATABASE_NAME }} \
-            -p ${{ secrets.DB_PORT }} \
-            -c '\conninfo'
+            echo 'Building Next.js...'
+            NODE_ENV=production npx next build
 
-          echo "Running Payload migrations..."
-          npx payload migrate --yes
+            echo 'Installing PM2 if needed...'
+            if ! command -v pm2 >/dev/null; then
+              npm install -g pm2
+            fi
 
-          echo "Building Next.js..."
-          NODE_ENV=production npx next build
+            echo 'Restarting app...'
+            pm2 delete SellersGPT || true
+            pm2 start npm --name SellersGPT -- start -- --env production
+            pm2 save
 
-          echo "Installing PM2 if missing..."
-          if ! command -v pm2 >/dev/null; then
-            npm install -g pm2
-          fi
-
-          echo "Restarting application..."
-
-          pm2 describe SellersGPT > /dev/null 2>&1 \
-            && pm2 restart SellersGPT \
-            || pm2 start npm --name SellersGPT -- start -- --env production
-
-          pm2 save
-
-          echo "Deployment completed successfully!"
-          EOF
+            echo 'Deployment complete!'
+          "
