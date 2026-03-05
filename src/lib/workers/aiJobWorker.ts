@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Worker, QueueEvents } from 'bullmq';
-import { connection } from '@/lib/redis';
+import { connection as redisConnection } from '@/lib/redis';
 import { getPayload } from 'payload';
 import configPromise from '@payload-config';
 import { runAIJob } from '@/utilities/ai/orchestrator';
@@ -49,7 +49,7 @@ const worker = new Worker('ai-jobs', async (job) => {
         throw err;
     }
 }, {
-    connection, concurrency: 5,
+    connection: redisConnection as any, concurrency: 5,
     // limiter: {
     //     max: 20, // max 20 jobs
     //     duration: 60000, // per minute
@@ -57,12 +57,12 @@ const worker = new Worker('ai-jobs', async (job) => {
 });
 
 // Queue events for logging & dashboard
-const queueEvents = new QueueEvents('ai-jobs', { connection });
+const queueEvents = new QueueEvents('ai-jobs', { connection: redisConnection as any });
 
 import { Queue } from 'bullmq';
 
 async function clearPendingJobs(jobId: any) {
-    const queue = new Queue('ai-jobs', { connection });
+    const queue = new Queue('ai-jobs', { connection : redisConnection as any});
 
     // Get waiting jobs
     const jobObj = await queue.getJob(jobId);
