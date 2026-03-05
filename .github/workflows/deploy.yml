@@ -46,6 +46,9 @@ jobs:
             echo 'Installing dependencies...'
             npm install
 
+            echo 'Running Payload migrations...'
+            npx payload migrate
+
             echo 'Writing postgres certificate...'
             echo '${{ secrets.POSTGRES_SSL_CERT }}' > postgres_cert.crt
             chmod 600 postgres_cert.crt
