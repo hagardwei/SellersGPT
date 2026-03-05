@@ -1,6 +1,4 @@
-import Redis from "ioredis"
-
-const redis = new Redis(process.env.REDIS_URL!)
+import { bullConnection as redis } from './redis'
 
 export async function rateLimit(ip: string) {
   const key = `chat_limit:${ip}`
