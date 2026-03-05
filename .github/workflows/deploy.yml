@@ -74,8 +74,8 @@ jobs:
             fi
 
             echo 'Restarting app...'
-            pm2 restart SellersGPT || pm2 start npm --name SellersGPT -- start
-
+            pm2 delete SellersGPT || true
+            pm2 start npm --name SellersGPT -- start -- --env production
             pm2 save
 
             echo 'Deployment complete!'
