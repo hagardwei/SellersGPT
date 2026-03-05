@@ -46,7 +46,6 @@ jobs:
             echo 'Installing dependencies...'
             npm install
 
-
             echo 'Writing postgres certificate...'
             echo '${{ secrets.POSTGRES_SSL_CERT }}' > postgres_cert.crt
             chmod 600 postgres_cert.crt
@@ -62,15 +61,16 @@ jobs:
 
             printf 'PAYLOAD_SECRET=%s\n' '${{ secrets.PAYLOAD_SECRET }}' >> .env.production
             printf 'NODE_ENV=production\n' >> .env.production
+            printf 'PAYLOAD_DISABLE_EMAIL=true\n' >> .env.production
 
             echo 'Testing DB connection...'
             psql 'postgresql://${{ secrets.DATABASE_USER }}:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DATABASE_NAME }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt' -c '\conninfo'
 
             echo 'Running Payload migrations...'
-            NODE_ENV=production npx payload migrate
+            NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx payload migrate
 
             echo 'Building Next.js...'
-            NODE_ENV=production npx next build
+            NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx next build
 
             echo 'Installing PM2 if needed...'
             if ! command -v pm2 >/dev/null; then
