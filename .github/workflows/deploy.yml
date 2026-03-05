@@ -51,19 +51,6 @@ jobs:
             echo '${{ secrets.POSTGRES_SSL_CERT }}' > postgres_cert.crt
             chmod 600 postgres_cert.crt
 
-            echo 'Creating .env.production...'
-            printf 'DATABASE_URL=postgresql://%s:%s@%s:%s/%s?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt\n' \
-              '${{ secrets.DATABASE_USER }}' \
-              '${{ secrets.DATABASE_PASSWORD }}' \
-              '${{ secrets.DB_HOST }}' \
-              '${{ secrets.DB_PORT }}' \
-              '${{ secrets.DATABASE_NAME }}' \
-              > .env.production
-
-            printf 'PAYLOAD_SECRET=%s\n' '${{ secrets.PAYLOAD_SECRET }}' >> .env.production
-            printf 'NODE_ENV=production\n' >> .env.production
-            printf 'PAYLOAD_DISABLE_EMAIL=true\n' >> .env.production
-
             echo 'Testing DB connection...'
             psql 'postgresql://${{ secrets.DATABASE_USER }}:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DATABASE_NAME }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt' -c '\conninfo'
 
