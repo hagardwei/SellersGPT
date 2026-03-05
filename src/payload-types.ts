@@ -214,7 +214,6 @@ export interface Page {
    * Shared ID for all language variants of this document.
    */
   translation_group_id: string;
-  hero?: any;
   slug?: string | null;
   deletedAt?: string | null;
   updatedAt: string;
@@ -497,7 +496,6 @@ export interface User {
       }[]
     | null;
   password?: string | null;
-  draft?: string | ''
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

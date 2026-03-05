@@ -308,7 +308,7 @@ export async function reviewContent(
     // Ensure score is within bounds
     score = Math.max(0, Math.min(100, score))
 
-    const approved = score >= 70
+    const approved = score >= 90
 
     console.log(`[AI Reviewer] Review complete. Score: ${score}, Approved: ${approved}`)
 

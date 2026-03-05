@@ -1,25 +1,25 @@
-import React from 'react'
+// import React from 'react'
 
-import type { Page, HeroBlock } from '@/payload-types'
+// import type { Page, HeroBlock } from '@/payload-types'
 
-import { HighImpactHero } from '@/heros/HighImpact'
-import { LowImpactHero } from '@/heros/LowImpact'
-import { MediumImpactHero } from '@/heros/MediumImpact'
+// import { HighImpactHero } from '@/heros/HighImpact'
+// import { LowImpactHero } from '@/heros/LowImpact'
+// import { MediumImpactHero } from '@/heros/MediumImpact'
 
-const heroes = {
-  highImpact: HighImpactHero,
-  lowImpact: LowImpactHero,
-  mediumImpact: MediumImpactHero,
-}
+// const heroes = {
+//   highImpact: HighImpactHero,
+//   lowImpact: LowImpactHero,
+//   mediumImpact: MediumImpactHero,
+// }
 
-export const RenderHero: React.FC<HeroBlock> = (props) => {
-  const { variant: type } = props || {}
+// export const RenderHero: React.FC<HeroBlock> = (props) => {
+//   const { variant: type } = props || {}
 
-  if (!type) return null
+//   if (!type) return null
 
-  const HeroToRender = (heroes as any)[type === 'split' ? 'highImpact' : type === 'media' ? 'mediumImpact' : 'lowImpact']
+//   const HeroToRender = (heroes as any)[type === 'split' ? 'highImpact' : type === 'media' ? 'mediumImpact' : 'lowImpact']
 
-  if (!HeroToRender) return null
+//   if (!HeroToRender) return null
 
-  return <HeroToRender {...props} />
-}
+//   return <HeroToRender {...props} />
+// }

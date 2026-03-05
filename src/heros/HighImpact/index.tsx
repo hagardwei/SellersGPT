@@ -8,7 +8,8 @@ import { CMSLink } from '@/components/Link'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 
-export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText }) => {
+
+export const HighImpactHero: any = ({ links, media, richText }: any) => {
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {

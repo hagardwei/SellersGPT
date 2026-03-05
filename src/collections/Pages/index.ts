@@ -317,23 +317,23 @@ export const Pages: CollectionConfig<'pages'> = {
           await revalidatePagePath(oldPath, 'pages-sitemap')
         }
       },
-      // triggerAutomatedTranslations,
+      triggerAutomatedTranslations,
       triggerAgentSync
     ],
     beforeValidate: [autoGenerateGroupId, validateUniqueGroupLanguage],
     beforeChange: [populatePublishedAt, getBlockDuplicateSlug('pages'), syncGroupSlug],
     afterDelete: [
-      // async ({ doc }) => {
-      //   const path = doc?.slug === 'home' ? '/' : `/${doc?.slug}`
-      //   await revalidatePagePath(path, 'pages-sitemap')
-      //   if(doc.status == "published"){
-      //     await aiJobQueue.add("AGENT_SYNC", {
-      //       workspaceId: doc.workspace,
-      //       sourceId: doc.id,
-      //       sourceType: "page"
-      //     })
-      //   }
-      // },
+      async ({ doc }) => {
+        const path = doc?.slug === 'home' ? '/' : `/${doc?.slug}`
+        await revalidatePagePath(path, 'pages-sitemap')
+        if(doc.status == "published"){
+          await aiJobQueue.add("AGENT_SYNC", {
+            workspaceId: doc.workspace,
+            sourceId: doc.id,
+            sourceType: "page"
+          })
+        }
+      },
     ],
   },
   versions: {
