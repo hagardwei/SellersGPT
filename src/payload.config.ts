@@ -84,19 +84,20 @@ export default buildConfig({
   cors: [getServerSideURL()].filter(Boolean),
   globals: [WebsiteInfo, ChatbotSettings, IndustryNewsSettings],
   
-  email: nodemailerAdapter({
-    defaultFromAddress: 'info@payloadcms.com',
-    defaultFromName: 'Payload',
-    // Nodemailer transportOptions
-    transportOptions: {
-      host: process.env.SMTP_HOST,
-      port: 587,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+  email: process.env.SMTP_HOST
+  ? nodemailerAdapter({
+      defaultFromAddress: 'info@payloadcms.com',
+      defaultFromName: 'Payload',
+      transportOptions: {
+        host: process.env.SMTP_HOST,
+        port: 587,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
       },
-    },
-  }),
+    })
+  : undefined,
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,
