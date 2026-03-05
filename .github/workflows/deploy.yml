@@ -26,6 +26,7 @@ jobs:
       - name: Upload PostgreSQL certificate to Droplet
         run: |
           echo "${{ secrets.POSTGRES_SSL_CERT }}" > ./postgres_cert.crt
+          chmod 600 ./postgres_cert.crt
 
       - name: Deploy to Droplet
         run: |
@@ -66,8 +67,8 @@ jobs:
             echo 'Testing DB connection...'
             psql 'postgresql://${{ secrets.DATABASE_USER }}:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DATABASE_NAME }}?sslmode=require&sslrootcert=/root/sellerapp/SellersGPT/postgres_cert.crt' -c '\conninfo'
 
-            echo 'Running Payload migrations...'
-            NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx payload migrate
+            echo 'Running Payload migrations (auto-generated only)...'
+            NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx payload migrate --auto
 
             echo 'Building Next.js...'
             NODE_ENV=production PAYLOAD_DISABLE_EMAIL=true npx next build
