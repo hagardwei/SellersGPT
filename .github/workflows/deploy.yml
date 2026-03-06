@@ -64,7 +64,7 @@ jobs:
 
             echo 'Restarting app...'
             pm2 delete SellersGPT || true
-            NODE_ENV=production pm2 start npm --name SellersGPT -- start
+            NODE_ENV=production pm2 start npm --name SellersGPT-worker -- run worker:ai
             pm2 save
 
             echo 'Deployment complete!'

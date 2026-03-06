@@ -12,6 +12,7 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
@@ -89,4 +90,19 @@ export const plugins: Plugin[] = [
       },
     },
   }),
+  s3Storage({
+    collections: {
+      media: true,
+    },
+    bucket: process.env.DO_SPACES_BUCKET!,
+    config: {
+      credentials: {
+        accessKeyId: process.env.DO_SPACES_KEY!,
+        secretAccessKey: process.env.DO_SPACES_SECRET!,
+      },
+      endpoint: process.env.DO_SPACES_ENDPOINT,
+      region: process.env.DO_SPACES_REGION,
+      forcePathStyle: false
+    }
+  })
 ]
